@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const OrderProcessingController = require('../../controllers/orderProcessingController');
+const OrderProcessingController = require('../../controllers/admin/orderProcessingController');
 const { verifyToken, orderAdmin } = require('../../middleware/auth');
 
 router.patch('/:orderId/status', 

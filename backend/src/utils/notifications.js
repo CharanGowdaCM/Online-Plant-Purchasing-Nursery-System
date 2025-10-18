@@ -42,11 +42,7 @@ const sendStockAlert = async (product) => {
   }
 };
 
-/**
- * Send order confirmation email to customer
- * @param {Object} order - Order details
- * @param {Object} user - User details
- */
+
 const sendOrderConfirmation = async (order, user) => {
   try {
     const mailOptions = {
@@ -192,11 +188,96 @@ const sendOrderCancellation = async (order) => {
     console.error('Error sending cancellation notification:', error);
     throw error;
   }
+
 };
+
+const sendEmailVerificationOTP = async (email, otp) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Verify Your New Email Address',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Email Verification OTP</h2>
+          <p>Dear User,</p>
+          <p>You requested to update your email address. Use the OTP below to verify your new email:</p>
+          <h3 style="background-color: #f7f7f7; padding: 10px; display: inline-block;">${otp}</h3>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p>If you did not request this change, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending email verification OTP:', error);
+    throw error;
+  }
+};
+
+const sendTicketCreated = async (ticket) => {
+  try {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: ticket.customer_email,
+    subject: `Support Ticket Created - ${ticket.ticket_number}`,
+    html: `
+      <div style="font-family: Arial; max-width:600px; margin:auto;">
+        <h2>Support Ticket Created</h2>
+        <p>Dear ${ticket.customer_name},</p>
+        <p>We have received your support request. Our team will get back to you soon.</p>
+        <hr/>
+        <p><strong>Ticket Number:</strong> ${ticket.ticket_number}</p>
+        <p><strong>Subject:</strong> ${ticket.subject}</p>
+        <p><strong>Category:</strong> ${ticket.category}</p>
+        <p><strong>Priority:</strong> ${ticket.priority}</p>
+        <p><strong>Status:</strong> ${ticket.status}</p>
+      </div>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending ticket creation email:', error);
+    throw error;
+  }
+};
+
+const sendTicketStatusUpdate = async (ticket, user) => {
+  try {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: user.email,
+    subject: `Update on Your Support Ticket - ${ticket.ticket_number}`,
+    html: `
+      <div style="font-family: Arial; max-width:600px; margin:auto;">
+        <h2>Ticket Status Updated</h2>
+        <p>Dear ${user.first_name || user.name},</p>
+        <p>Your support ticket <b>${ticket.subject}</b> has been updated to status: 
+        <b>${ticket.status.toUpperCase()}</b>.</p>
+        ${ticket.status === 'resolved'
+          ? '<p>If your issue is resolved, you may close this ticket. Otherwise, reply to reopen.</p>'
+          : ''}
+        <hr/>
+        <p><strong>Ticket Number:</strong> ${ticket.ticket_number}</p>
+        <p><strong>Priority:</strong> ${ticket.priority}</p>
+      </div>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending ticket status update email:', error);
+    throw error;
+  }
+};
+
 
 module.exports = {
   sendStockAlert,
   sendOrderConfirmation,
   sendOrderStatusUpdate,
-  sendOrderCancellation
+  sendOrderCancellation,
+  sendEmailVerificationOTP,
+  sendTicketCreated,
+  sendTicketStatusUpdate
 };

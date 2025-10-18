@@ -1,6 +1,6 @@
-const OrderModel = require('../models/orderModel');
-const { validateOrderUpdate } = require('../utils/validators/orderValidator');
-const { sendOrderStatusUpdate } = require('../utils/notifications');
+const OrderModel = require('../../models/orderModel');
+const { validateOrderUpdate } = require('../../utils/validators/orderValidator');
+const { sendOrderStatusUpdate } = require('../../utils/notifications');
 
 class OrderProcessingController {
   static async updateOrderStatus(req, res) {

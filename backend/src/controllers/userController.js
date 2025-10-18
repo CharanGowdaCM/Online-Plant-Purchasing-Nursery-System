@@ -1,6 +1,7 @@
 // controllers/userController.js
 const UserModel = require('../models/userModel');
 const { validateProfile, validateUserStatusUpdate, validateUserRoleUpdate } = require('../utils/validators/userValidator');
+const {sendEmailVerificationOTP} = require('../utils/notifications');
 
 // Save or update user profile
 const saveProfile = async (req, res) => {
@@ -128,6 +129,45 @@ const updateUserRole = async (req, res) => {
   } catch (err) {
     console.error('Error in updateUserRole:', err);
     res.status(500).json({ success: false, message: 'Server error' });
+  } 
+};
+
+
+const requestEmailChange = async (req, res) => {
+  try {
+    const { newEmail } = req.body;
+    if (!newEmail) return res.status(400).json({ success: false, message: 'New email required' });
+
+    const otp = await UserModel.requestEmailChange(req.user.id, newEmail);
+    await sendEmailVerificationOTP(newEmail, otp);
+
+    res.json({
+      success: true,
+      message: 'OTP sent to your new email. Please verify to update.'
+    });
+  } catch (err) {
+    console.error('Error in requestEmailChange:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Verify email OTP
+const verifyEmailOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const updated = await UserModel.verifyEmailOTP(req.user.id, otp);
+
+    if (!updated) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Email updated successfully. You can now login using the new email.'
+    });
+  } catch (err) {
+    console.error('Error in verifyEmailOTP:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -137,5 +177,7 @@ module.exports = {
   getUserDetails,
   listUsers,
   updateUserStatus,
-  updateUserRole
+  updateUserRole,
+  requestEmailChange,
+  verifyEmailOTP
 };

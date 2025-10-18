@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { sendStockAlert } = require('../utils/notifications');
 
 class InventoryModel {
   static async checkStock(productId, requestedQuantity) {

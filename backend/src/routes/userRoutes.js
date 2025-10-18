@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const {
+  createTicket,
+  getUserTickets
+} = require('../controllers/admin/supportTicketController.js');
+
 const { verifyToken, superAdminOnly } = require('../middleware/auth');
 
 // Public routes - none
@@ -8,6 +13,10 @@ const { verifyToken, superAdminOnly } = require('../middleware/auth');
 // Protected routes
 router.get('/profile', verifyToken, userController.getProfile);
 router.post('/profile', verifyToken, userController.saveProfile);
+router.post('/request-email-change', verifyToken, userController.requestEmailChange);
+router.post('/verify-email-otp', verifyToken, userController.verifyEmailOTP);
+router.post('/support', verifyToken, createTicket);
+router.get('/support/my-tickets', verifyToken, getUserTickets);
 
 // Super admin only routes
 router.get('/admin/users', verifyToken, superAdminOnly, userController.listUsers);

@@ -10,6 +10,8 @@ router.use(verifyToken, superAdminOnly);
 router.get('/analytics/users', SuperAdminController.getUserAnalytics);
 router.get('/analytics/sales', SuperAdminController.getSalesAnalytics);
 router.get('/platform/stats', SuperAdminController.getPlatformStats);
+router.get('/orders', SuperAdminController.getAllOrders); 
+router.get('/orders/:orderId', SuperAdminController.getOrderDetails); 
 
 // Admin Management
 router.post('/admins/manage', SuperAdminController.manageAdminRoles);

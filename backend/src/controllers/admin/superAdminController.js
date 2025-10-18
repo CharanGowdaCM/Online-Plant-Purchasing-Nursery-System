@@ -61,7 +61,6 @@ class SuperAdminController {
     }
   }
 
-  // System Audit
   static async getActivityLogs(req, res) {
     try {
       const { page = 1, limit = 20, type, userId } = req.query;
@@ -122,6 +121,53 @@ class SuperAdminController {
       });
     }
   }
+
+  static async getAllOrders(req, res) {
+    try {
+      const { page = 1, limit = 20, status, dateFrom, dateTo } = req.query;
+      const offset = (page - 1) * limit;
+
+      const orders = await OrderModel.getAllOrders({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        status,
+        dateFrom,
+        dateTo
+      });
+
+      res.json({
+        success: true,
+        data: orders,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: orders.length
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+    }
+  }
+
+  // 2. Get single order details by ID
+  static async getOrderDetails(req, res) {
+    try {
+      const { orderId } = req.params;
+      const order = await OrderModel.getOrderByIdForAdmin(orderId);
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      res.json({ success: true, data: order });
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch order details' });
+    }
+  }
+
+  
 }
 
 module.exports = SuperAdminController;

@@ -21,7 +21,7 @@ router.use('/superadmin', verifyToken, superAdminOnly, require('./adminRoutes/su
 
 router.use('/inventory', verifyToken, inventoryAdmin, require('./adminRoutes/inventory'));
 router.use('/orders', verifyToken, orderAdmin, require('./adminRoutes/orderProcessing'));
-// router.use('/support', verifyToken, supportAdmin, require('./adminRoutes/support'));
-// router.use('/content', verifyToken, contentAdmin, require('./adminRoutes/content'));
+router.use('/support', verifyToken, supportAdmin, require('./adminRoutes/supportTicketRoutes'));
+router.use('/content', verifyToken, contentAdmin, require('./adminRoutes/contentRoutes'));
 
 module.exports = router;

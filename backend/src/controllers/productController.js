@@ -1,4 +1,5 @@
 const ProductModel = require('../models/productModel');
+const PlantCareModel = require('../models/plantCareModel');
 
 class ProductController {
   // Public endpoints
@@ -56,9 +57,24 @@ class ProductController {
         });
       }
 
+      // Fetch plant care guides related to the product
+      let guides = [];
+      if (product.plant_type) {
+        const result = await PlantCareModel.listGuides({
+          search: product.plant_type,
+          is_published: true,
+          limit: 5, // optional: limit number of guides
+          page: 1
+        });
+        guides = result.guides;
+      }
+
       res.json({
         success: true,
-        data: product
+        data: {
+          product,
+          plantCareGuides: guides
+        }
       });
     } catch (error) {
       console.error('Error in getProductDetails:', error);

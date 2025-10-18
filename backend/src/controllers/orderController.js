@@ -126,6 +126,62 @@ class OrderController {
       });
     }
   }
+
+  static async getUserOrders(req, res) {
+    try {
+      const userId = req.user.id;
+      const orders = await OrderModel.getOrdersByUserId(userId);
+
+      return res.json({
+        success: true,
+        count: orders.length,
+        data: orders
+      });
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch user orders'
+      });
+    }
+  }
+
+  // GET /api/orders/user/:orderId
+  static async getUserOrderDetails(req, res) {
+    try {
+      const userId = req.user.id;
+      const { orderId } = req.params;
+
+      // fetch order
+      const order = await OrderModel.getOrderById(orderId);
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      // ensure ownership
+      if (order.user_id !== userId) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
+      // fetch status history if needed
+      const history = await OrderModel.getOrderStatusHistory(orderId);
+
+      return res.json({
+        success: true,
+        data: {
+          ...order,
+          status_history: history
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch order details'
+      });
+    }
+  }
 }
 
 module.exports = OrderController;

@@ -127,6 +127,45 @@ class UserModel {
     if (error) throw error;
     return data;
   }
+
+  static async requestEmailChange(userId, newEmail) {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+
+    // Store OTP and new email in a separate table or in-memory store
+    const { error } = await supabase
+      .from('email_change_requests')
+      .upsert({ user_id: userId, new_email: newEmail, otp, expires_at: new Date(Date.now() + 10*60*1000).toISOString() }); // valid 10 mins
+
+    if (error) throw error;
+    return otp;
+  }
+
+  // Verify OTP and update email
+  static async verifyEmailOTP(userId, otp) {
+    const { data, error } = await supabase
+      .from('email_change_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('otp', otp)
+      .single();
+
+    if (error || !data) return false;
+
+    // Check expiration
+    if (new Date(data.expires_at) < new Date()) return false;
+
+    // Update email
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ email: data.new_email, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    if (updateError) throw updateError;
+
+    // Delete the OTP entry
+    await supabase.from('email_change_requests').delete().eq('user_id', userId);
+
+    return true;
+  }
 }
 
 module.exports = UserModel;

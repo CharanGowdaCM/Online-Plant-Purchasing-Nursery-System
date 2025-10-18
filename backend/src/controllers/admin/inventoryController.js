@@ -1,5 +1,5 @@
-const InventoryModel = require('../models/inventoryModel');
-const { sendStockAlert } = require('../utils/notifications');
+const InventoryModel = require('../../models/inventoryModel');
+const { sendStockAlert } = require('../../utils/notifications');
 
 class InventoryController {
   static async getInventoryStatus(req, res) {
