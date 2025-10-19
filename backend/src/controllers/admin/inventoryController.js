@@ -1,4 +1,7 @@
 const InventoryModel = require('../../models/inventoryModel');
+const ProductModel = require('../../models/productModel');
+const CategoryModel = require('../../models/categoryModel');
+const { validateCategoryPayload } = require('../../utils/validators/categoryValidator');
 const { sendStockAlert } = require('../../utils/notifications');
 
 class InventoryController {
@@ -125,6 +128,101 @@ class InventoryController {
       });
     }
   }
+
+  static async addProduct(req, res) {
+    try {
+      const role = req.user && req.user.role;
+      if (!role || (role !== 'inventory_admin' && role !== 'super_admin')) {
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+      }
+
+      const productData = req.body;
+
+      // Basic validation (should eventually move to middleware)
+      const requiredFields = ['sku', 'name', 'category_id', 'price'];
+      const missing = requiredFields.filter((f) => !productData[f]);
+      if (missing.length) {
+        return res.status(400).json({
+          success: false,
+          message: `Missing required fields: ${missing.join(', ')}`,
+        });
+      }
+
+      // Create product via ProductModel
+      const product = await ProductModel.createProduct(productData);
+
+      // Log inventory movement if stock > 0
+      if (product.stock_quantity > 0) {
+        await InventoryModel.logInventoryMovement(product.id, product.stock_quantity, 'increase');
+        await InventoryModel.checkAndNotifyLowStock(product.id);
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: 'Product created successfully',
+        data: product,
+      });
+    } catch (err) {
+      console.error('Error in addProduct:', err);
+      return res.status(500).json({
+        success: false,
+        message: err.message || 'Server error while creating product',
+      });
+    }
+  }
+
+  static async addCategory(req, res) {
+    try {
+      const validation = validateCategoryPayload(req.body);
+      if (!validation.isValid) {
+        return res.status(400).json({ success: false, errors: validation.errors });
+      }
+
+      const category = await CategoryModel.addCategory(req.body);
+      res.status(201).json({
+        success: true,
+        message: 'Category created successfully',
+        data: category,
+      });
+    } catch (error) {
+      console.error('Error adding category:', error);
+      res.status(500).json({ success: false, message: 'Failed to create category' });
+    }
+  }
+
+  static async listCategories(req, res) {
+    try {
+      const { includeInactive } = req.query;
+      const categories = await CategoryModel.getAllCategories({ includeInactive: includeInactive === 'true' });
+      res.json({ success: true, data: categories });
+    } catch (error) {
+      console.error('Error listing categories:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch categories' });
+    }
+  }
+
+  static async updateCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const category = await CategoryModel.updateCategory(id, req.body);
+      res.json({ success: true, message: 'Category updated successfully', data: category });
+    } catch (error) {
+      console.error('Error updating category:', error);
+      res.status(500).json({ success: false, message: 'Failed to update category' });
+    }
+  }
+
+  static async deleteCategory(req, res) {
+    try {
+      const { id } = req.params;
+      await CategoryModel.deleteCategory(id);
+      res.json({ success: true, message: 'Category deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      res.status(500).json({ success: false, message: 'Failed to delete category' });
+    }
+  }
+
 }
 
 module.exports = InventoryController;

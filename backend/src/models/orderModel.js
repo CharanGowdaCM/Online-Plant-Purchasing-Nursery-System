@@ -300,6 +300,68 @@ class OrderModel {
     if (error) throw error;
     return data;
   }
+
+  static async getStats() {
+    try {
+      // Total orders
+      const { count: totalOrders, error: totalError } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true });
+      if (totalError) throw totalError;
+
+      // Orders by status
+      const statuses = ['pending', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'];
+      const ordersByStatus = {};
+
+      for (const status of statuses) {
+        const { count, error } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', status);
+        if (error) throw error;
+        ordersByStatus[status] = count;
+      }
+
+      return {
+        totalOrders,
+        ordersByStatus
+      };
+    } catch (err) {
+      throw new Error(err.message || 'Failed to get order stats');
+    }
+  }
+
+  static async getRevenueStats({ dateFrom, dateTo } = {}) {
+    try {
+      let query = supabase
+        .from('orders')
+        .select('total_amount', { count: 'exact', head: false })
+        .eq('payment_status', 'paid'); // only consider paid orders
+
+      if (dateFrom) query = query.gte('placed_at', dateFrom);
+      if (dateTo) query = query.lte('placed_at', dateTo);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const totalRevenue = data.reduce((sum, o) => sum + Number(o.total_amount), 0);
+      const totalOrders = data.length;
+      const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
+      const maxOrderValue = data.length ? Math.max(...data.map(o => Number(o.total_amount))) : 0;
+      const minOrderValue = data.length ? Math.min(...data.map(o => Number(o.total_amount))) : 0;
+
+      return {
+        totalOrders,
+        totalRevenue: Number(totalRevenue.toFixed(2)),
+        avgOrderValue: Number(avgOrderValue.toFixed(2)),
+        maxOrderValue: Number(maxOrderValue.toFixed(2)),
+        minOrderValue: Number(minOrderValue.toFixed(2))
+      };
+    } catch (err) {
+      throw new Error(err.message || 'Failed to get revenue stats');
+    }
+  }
+
 }
 
 module.exports = OrderModel;
