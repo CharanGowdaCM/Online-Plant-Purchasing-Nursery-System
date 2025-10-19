@@ -14,7 +14,16 @@ const saveProfile = async (req, res) => {
       });
     }
 
-    const result = await UserModel.saveProfile(req.user.id, req.body);
+    // For initial profile creation after signup, email will be included in the request
+    const userId = req.user?.id || (await UserModel.getUserIdByEmail(req.body.email));
+    if (!userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const result = await UserModel.saveProfile(userId, req.body);
     
     res.json({
       success: true,

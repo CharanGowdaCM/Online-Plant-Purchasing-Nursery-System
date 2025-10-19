@@ -8,11 +8,12 @@ const {
 
 const { verifyToken, superAdminOnly } = require('../middleware/auth');
 
-// Public routes - none
+// Public routes
+router.post('/profile/create', userController.saveProfile); // Initial profile creation after signup
 
 // Protected routes
 router.get('/profile', verifyToken, userController.getProfile);
-router.post('/profile', verifyToken, userController.saveProfile);
+router.post('/profile', verifyToken, userController.saveProfile); // Update existing profile
 router.post('/request-email-change', verifyToken, userController.requestEmailChange);
 router.post('/verify-email-otp', verifyToken, userController.verifyEmailOTP);
 router.post('/support', verifyToken, createTicket);

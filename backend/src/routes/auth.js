@@ -8,6 +8,7 @@ const {
   validateLoginRequest,
   validateEmail,
   validateOTP,
+  validatePassword,
   validateResetRequest,
   validateRefreshToken
 } = require("../utils/validators/authValidator");
@@ -31,13 +32,20 @@ router.post("/signup/send-otp",
 );
 
 router.post("/signup/verify", 
-  validateRequest((data) => ({
-    isValid: validateEmail(data.email).isValid && validateOTP(data.otp).isValid,
-    errors: {
-      ...(!validateEmail(data.email).isValid && { email: validateEmail(data.email).message }),
-      ...(!validateOTP(data.otp).isValid && { otp: validateOTP(data.otp).message })
-    }
-  })),
+  validateRequest((data) => {
+    const emailValid = validateEmail(data.email);
+    const otpValid = validateOTP(data.otp);
+    const passwordValid = validatePassword(data.password);
+    
+    return {
+      isValid: emailValid.isValid && otpValid.isValid && passwordValid.isValid,
+      errors: {
+        ...(!emailValid.isValid && { email: emailValid.message }),
+        ...(!otpValid.isValid && { otp: otpValid.message }),
+        ...(!passwordValid.isValid && { password: passwordValid.message })
+      }
+    };
+  }),
   authController.verifySignupOTP
 );
 

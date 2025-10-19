@@ -223,26 +223,27 @@ const verifySignupOTP = async (req, res) => {
         message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` 
       });
     }
-
+     console.log("done1");
     // Check if user already exists
-    const userExists = await AuthModel.userExists(email);
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: "An account with this email already exists. Please log in.",
-      });
-    }
+    //const userExists = await AuthModel.userExists(email);
+    // if (userExists) {
+    //    console.log("done2");
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "An account with this email already exists. Please log in.",
+    //   });
+    // }
 
     // Verify OTP
     const otpData = await AuthModel.findOTPByEmail(email);
-
+     console.log("done3");
     if (!otpData) {
       return res.status(400).json({ 
         success: false, 
         message: "OTP not found or expired. Please request a new OTP." 
       });
     }
-
+     console.log("done4");
     if (otpData.attempts >= MAX_OTP_ATTEMPTS) {
       await AuthModel.deleteOTP(email);
       return res.status(400).json({ 
@@ -250,7 +251,7 @@ const verifySignupOTP = async (req, res) => {
         message: "Maximum OTP attempts exceeded. Please request a new OTP." 
       });
     }
-
+     console.log("done5");
     if (new Date() > new Date(otpData.expires_at)) {
       await AuthModel.deleteOTP(email);
       return res.status(400).json({ 
@@ -267,11 +268,12 @@ const verifySignupOTP = async (req, res) => {
         message: `Invalid OTP. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.` 
       });
     }
-
+    console.log("done6");
     // Hash password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
     // Create user
+     console.log("done7");
     const newUser = await AuthModel.createUser({
       email,
       password_hash: hashedPassword,
@@ -283,6 +285,7 @@ const verifySignupOTP = async (req, res) => {
     await AuthModel.deleteOTP(email);
 
     // Send welcome email (don't wait for it)
+     console.log("done8");
     sendWelcomeEmail(email).catch(err => 
       console.error("Error sending welcome email:", err)
     );
@@ -296,6 +299,7 @@ const verifySignupOTP = async (req, res) => {
       }
     });
   } catch (err) {
+     console.log("done9");
     console.error("Error in verifySignupOTP:", err);
     res.status(500).json({ 
       success: false, 

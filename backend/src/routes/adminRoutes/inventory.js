@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const InventoryController = require('../../controllers/admin/inventoryController');
-const { validateInventoryUpdate } = require('../../utils/validators/inventoryValidator');
+const { validateInventoryData } = require('../../utils/validators/inventoryValidator');
 const { verifyToken, inventoryAdmin } = require('../../middleware/auth');
 
 
@@ -11,9 +11,9 @@ router.get('/status', InventoryController.getInventoryStatus);
 router.get('/low-stock', InventoryController.getLowStockItems);
 router.get('/movements', InventoryController.getInventoryMovements);
 
-router.post('/addproduct', validateInventoryUpdate('add'), InventoryController.addProduct);
+router.post('/addproduct', validateInventoryData('add'), InventoryController.addProduct);
 
-router.patch('/products/:productId/stock', validateInventoryUpdate('update'), InventoryController.updateStock);
+router.patch('/products/:productId/stock', validateInventoryData('update'), InventoryController.updateStock);
 router.patch('/products/:productId/thresholds', InventoryController.updateThresholds);
 
 

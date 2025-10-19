@@ -51,8 +51,9 @@ class AuthModel {
     }
   }
 
-   async createUser(userData) {
+   static async createUser(userData) {
     try {
+       console.log("done21");
       const { data, error } = await supabase
         .from("users")
         .insert([{
@@ -64,7 +65,7 @@ class AuthModel {
         }])
         .select()
         .single();
-
+         console.log("done22");
       if (error) {
         throw error;
       }
@@ -113,14 +114,16 @@ class AuthModel {
  
   static async findOTPByEmail(email) {
     try {
+       console.log("done11");
       const { data, error } = await supabase
         .from("otps")
         .select("*")
         .eq("email", email)
         .single();
-
+       console.log("done12");
       if (error) {
         if (error.code === "PGRST116") {
+           console.log("done13");
           return null;
         }
         throw error;

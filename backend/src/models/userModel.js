@@ -1,6 +1,20 @@
 const { supabase } = require('../config/supabaseClient');
 
 class UserModel {
+  static async getUserIdByEmail(email) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // User not found
+      throw error;
+    }
+    return data.id;
+  }
+
   static async getProfileByUserId(userId) {
     const { data, error } = await supabase
       .from('profiles')

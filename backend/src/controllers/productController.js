@@ -1,9 +1,7 @@
 const ProductModel = require('../models/productModel');
-const PlantCareModel = require('../models/plantCareModel');
 
 class ProductController {
-  // Public endpoints
-  static async listProducts(req, res) {
+  static async listProducts(req, res, next) {
     try {
       const { 
         page = 1, 
@@ -16,7 +14,7 @@ class ProductController {
         careLevel
       } = req.query;
 
-      const products = await ProductModel.getProducts({
+      const result = await ProductModel.getProducts({
         page: parseInt(page),
         limit: parseInt(limit),
         category,
@@ -27,21 +25,26 @@ class ProductController {
         careLevel
       });
 
-      res.json({
+      // Check if headers have already been sent
+      if (res.headersSent) return next();
+
+      return res.json({
         success: true,
-        data: products.items,
+        data: result.data || [],
         pagination: {
-          total: products.total,
+          total: result.count || 0,
           page: parseInt(page),
-          totalPages: Math.ceil(products.total / limit)
+          totalPages: Math.ceil((result.count || 0) / parseInt(limit))
         }
       });
     } catch (error) {
-      console.error('Error in listProducts:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Failed to fetch products' 
-      });
+      if (!res.headersSent) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error fetching products',
+          error: error.message
+        });
+      }
     }
   }
 
@@ -49,7 +52,7 @@ class ProductController {
     try {
       const { slug } = req.params;
       const product = await ProductModel.getProductBySlug(slug);
-
+      
       if (!product) {
         return res.status(404).json({
           success: false,
@@ -57,30 +60,15 @@ class ProductController {
         });
       }
 
-      // Fetch plant care guides related to the product
-      let guides = [];
-      if (product.plant_type) {
-        const result = await PlantCareModel.listGuides({
-          search: product.plant_type,
-          is_published: true,
-          limit: 5, // optional: limit number of guides
-          page: 1
-        });
-        guides = result.guides;
-      }
-
-      res.json({
+      return res.json({
         success: true,
-        data: {
-          product,
-          plantCareGuides: guides
-        }
+        data: product
       });
     } catch (error) {
-      console.error('Error in getProductDetails:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Failed to fetch product details' 
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching product details',
+        error: error.message
       });
     }
   }
@@ -88,15 +76,15 @@ class ProductController {
   static async getCategories(req, res) {
     try {
       const categories = await ProductModel.getAllCategories();
-      res.json({
+      return res.json({
         success: true,
         data: categories
       });
     } catch (error) {
-      console.error('Error in getCategories:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Failed to fetch categories' 
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching categories',
+        error: error.message
       });
     }
   }

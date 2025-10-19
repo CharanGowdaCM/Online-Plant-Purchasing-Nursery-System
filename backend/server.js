@@ -62,6 +62,12 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // Check if headers have already been sent
+  if (res.headersSent) {
+    return next(err);
+  }
+  
   res.status(500).json({
     success: false,
     error: 'Internal Server Error',
