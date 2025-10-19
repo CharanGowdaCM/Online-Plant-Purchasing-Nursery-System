@@ -100,7 +100,7 @@ const sendWelcomeEmail = async (email) => {
  * @param {string} token - Reset token
  */
 const sendPasswordResetEmail = async (email, token) => {
-  const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+  const resetLink = ` ${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER || "akhileshkoppala@gmail.com",
@@ -116,7 +116,7 @@ const sendPasswordResetEmail = async (email, token) => {
         </div>
         <p style="color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
         <p style="color: #666; font-size: 12px; word-break: break-all;">${resetLink}</p>
-        <p style="color: #ff6b6b; font-weight: bold;">⚠️ This link will expire in ${PASSWORD_RESET_EXPIRY_MINUTES} minutes.</p>
+        <p style="color: #ff6b6b; font-weight: bold;">⚠ This link will expire in ${PASSWORD_RESET_EXPIRY_MINUTES} minutes.</p>
         <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email and your password will remain unchanged.</p>
       </div>
     `,
@@ -137,7 +137,7 @@ const sendPasswordChangedEmail = async (email) => {
         <h3 style="color: #4CAF50;">Password Changed Successfully</h3>
         <p>Your password has been changed successfully!</p>
         <p>You can now login with your new password.</p>
-        <p style="color: #ff6b6b;">⚠️ If you didn't make this change, please contact our support team immediately.</p>
+        <p style="color: #ff6b6b;">⚠ If you didn't make this change, please contact our support team immediately.</p>
       </div>
     `,
   });
@@ -220,7 +220,7 @@ const verifySignupOTP = async (req, res) => {
     if (password.length < MIN_PASSWORD_LENGTH) {
       return res.status(400).json({ 
         success: false, 
-        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` 
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
       });
     }
      console.log("done1");
@@ -273,7 +273,7 @@ const verifySignupOTP = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
     // Create user
-     console.log("done7");
+    
     const newUser = await AuthModel.createUser({
       email,
       password_hash: hashedPassword,
@@ -312,7 +312,7 @@ const verifySignupOTP = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    console.log("here21")
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ 
@@ -320,19 +320,21 @@ const login = async (req, res) => {
         message: "Email and password are required" 
       });
     }
-
+    console.log("here22")
     // Fetch user from database
     const user = await AuthModel.findUserByEmail(email);
-
+    console.log("here2-2")
     if (!user) {
+      console.log("here23")
       return res.status(401).json({ 
         success: false, 
         message: "Invalid email or password" 
       });
     }
-
+    console.log("here24")
     // Check if user is active
     if (!user.is_active) {
+      console.log("here25")
       return res.status(403).json({ 
         success: false, 
         message: "Your account has been deactivated. Please contact support." 
@@ -340,14 +342,17 @@ const login = async (req, res) => {
     }
 
     // Verify password
+    console.log("here26")
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    console.log("here27")
     if (!isPasswordValid) {
+      console.log("here28")
       return res.status(401).json({ 
         success: false, 
         message: "Invalid email or password" 
       });
     }
-
+    console.log("here28")
     // Check if user is already logged in on another device
     if (activeSessions.has(user.id)) {
       return res.status(403).json({ 
@@ -536,7 +541,7 @@ const resetPassword = async (req, res) => {
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
       return res.status(400).json({ 
         success: false, 
-        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` 
+        message: 'Password must be at least ${MIN_PASSWORD_LENGTH} characters '
       });
     }
 
@@ -574,7 +579,7 @@ const resetPassword = async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: "Password changed successfully! You can now login with your new password." 
+      message: 'Password changed successfully! You can now login with your new password.'
     });
   } catch (err) {
     console.error("Error in resetPassword:", err);

@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabaseClient');
+const supabase = require('../config/supabase');
 
 class UserModel {
   static async getUserIdByEmail(email) {
@@ -27,6 +27,17 @@ class UserModel {
   }
 
   static async saveProfile(userId, profileData) {
+    // First check if user exists in users table
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    
+    if (userError || !user) {
+      throw new Error('User not found');
+    }
+
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')

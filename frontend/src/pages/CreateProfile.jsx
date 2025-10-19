@@ -75,21 +75,18 @@ const CreateProfile = () => {
       // Create profile
       const response = await api.post('/users/profile/create', {
         ...formData,
-        email // Include the email from signup
+        email
       });
 
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to create profile');
       }
 
-      // Login after profile creation
-      const loginResult = await authService.login(email, password);
-      if (loginResult.success) {
+      // Direct login after profile creation
+      const loginResponse = await login(email, password);
+      if (loginResponse.success) {
         // Clear the pending profile data
         sessionStorage.removeItem('pendingProfile');
-        
-        // Update auth context
-        await login(loginResult.user, loginResult.tokens);
         
         // Redirect to landing page
         navigate('/');

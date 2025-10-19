@@ -10,12 +10,13 @@ class AuthModel {
    */
   static async findUserByEmail(email) {
     try {
+      console.log("here1")
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("email", email)
         .single();
-
+      console.log("here2");
       if (error) {
         // Return null if user not found (not an error case)
         if (error.code === "PGRST116") {
@@ -27,7 +28,7 @@ class AuthModel {
       return data;
     } catch (error) {
       console.error("Error in findUserByEmail:", error);
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error('Database error: ${error.message}');
     }
   }
 
@@ -47,7 +48,7 @@ class AuthModel {
       return !!data;
     } catch (error) {
       console.error("Error in userExists:", error);
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error('Database error: ${error.message}');
     }
   }
 
@@ -73,7 +74,7 @@ class AuthModel {
       return data;
     } catch (error) {
       console.error("Error in createUser:", error);
-      throw new Error(`Failed to create user: ${error.message}`);
+      throw new Error('Failed to create user: ${error.message}');
     }
   }
 
@@ -90,7 +91,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in updateLastLogin:", error);
-      throw new Error(`Failed to update last login: ${error.message}`);
+      throw new Error('Failed to update last login: ${error.message}');
     }
   }
 
@@ -107,7 +108,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in updatePassword:", error);
-      throw new Error(`Failed to update password: ${error.message}`);
+      throw new Error('Failed to update password: ${error.message}');
     }
   }
 
@@ -132,7 +133,7 @@ class AuthModel {
       return data;
     } catch (error) {
       console.error("Error in findOTPByEmail:", error);
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error('Database error: ${error.message}');
     }
   }
 
@@ -157,7 +158,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in createOTP:", error);
-      throw new Error(`Failed to create OTP: ${error.message}`);
+      throw new Error('Failed to create OTP: ${error.message}');
     }
   }
 
@@ -173,7 +174,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in deleteOTP:", error);
-      throw new Error(`Failed to delete OTP: ${error.message}`);
+      throw new Error('Failed to delete OTP: ${error.message}');
     }
   }
 
@@ -189,7 +190,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in incrementOTPAttempts:", error);
-      throw new Error(`Failed to increment OTP attempts: ${error.message}`);
+      throw new Error('Failed to increment OTP attempts: ${error.message}');
     }
   }
 
@@ -212,7 +213,7 @@ class AuthModel {
       return data;
     } catch (error) {
       console.error("Error in findPasswordResetToken:", error);
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error('Database error: ${error.message}');
     }
   }
 
@@ -235,7 +236,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in createPasswordResetToken:", error);
-      throw new Error(`Failed to create password reset token: ${error.message}`);
+      throw new Error('Failed to create password reset token: ${error.message}');
     }
   }
 
@@ -252,7 +253,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in markPasswordResetTokenAsUsed:", error);
-      throw new Error(`Failed to mark token as used: ${error.message}`);
+      throw new Error('Failed to mark token as used: ${error.message}');
     }
   }
 
@@ -268,7 +269,7 @@ class AuthModel {
       }
     } catch (error) {
       console.error("Error in deletePasswordResetToken:", error);
-      throw new Error(`Failed to delete password reset token: ${error.message}`);
+      throw new Error('Failed to delete password reset token: ${error.message}');
     }
   }
 
@@ -294,7 +295,7 @@ class AuthModel {
   static async getUsersByRole(role) {
     const { data, error } = await supabase
       .from('users')
-      .select('*, profiles(*)')
+      .select(', profiles()')
       .eq('role', role);
 
     if (error) throw error;

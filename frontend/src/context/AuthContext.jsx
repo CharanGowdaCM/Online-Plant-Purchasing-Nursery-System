@@ -15,7 +15,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const response = await authService.sendLoginOTP(email, password);
+    const response = await authService.login(email, password);
+    if (response.success) {
+      setUser(response.user);
+    }
     return response;
   };
 
@@ -29,6 +32,9 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const response = await authService.register(userData);
+    if (response.success) {
+      setUser(response.user);
+    }
     return response;
   };
 

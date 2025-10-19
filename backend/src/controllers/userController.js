@@ -1,7 +1,12 @@
 // controllers/userController.js
 const UserModel = require('../models/userModel');
-const { validateProfile, validateUserStatusUpdate, validateUserRoleUpdate } = require('../utils/validators/userValidator');
-const {sendEmailVerificationOTP} = require('../utils/notifications');
+const supabase = require('../config/supabase');
+const { 
+  validateProfile, 
+  validateUserStatusUpdate, 
+  validateUserRoleUpdate 
+} = require('../utils/validators/userValidator');
+const { sendEmailVerificationOTP } = require('../utils/notifications');
 
 // Save or update user profile
 const saveProfile = async (req, res) => {
@@ -14,17 +19,35 @@ const saveProfile = async (req, res) => {
       });
     }
 
-    // For initial profile creation after signup, email will be included in the request
-    const userId = req.user?.id || (await UserModel.getUserIdByEmail(req.body.email));
-    if (!userId) {
-      return res.status(404).json({
+    let userId;
+
+    if (req.user?.id) {
+      userId = req.user.id;
+    } else if (req.body.email) {
+      // For initial profile creation after signup
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', req.body.email)
+        .single();
+
+      if (error || !data) {
+        console.error('Error finding user:', error);
+        return res.status(404).json({
+          success: false,
+          message: 'User not found. Please complete signup first.'
+        });
+      }
+      userId = data.id;
+    } else {
+      return res.status(400).json({
         success: false,
-        message: 'User not found'
+        message: 'User ID or email is required'
       });
     }
 
     const result = await UserModel.saveProfile(userId, req.body);
-    
+
     res.json({
       success: true,
       message: `Profile ${result} successfully`
@@ -101,7 +124,7 @@ const updateUserStatus = async (req, res) => {
     }
 
     await UserModel.updateUserStatus(req.params.userId, req.body.is_active);
-    
+
     res.json({
       success: true,
       message: `User ${req.body.is_active ? 'activated' : 'deactivated'} successfully`
@@ -114,7 +137,11 @@ const updateUserStatus = async (req, res) => {
 
 const updateUserRole = async (req, res) => {
   try {
-    const validation = validateUserRoleUpdate(req.body, ['customer', 'inventory_admin', 'order_admin', 'support_admin', 'content_admin']);
+    const validation = validateUserRoleUpdate(
+      req.body,
+      ['customer', 'inventory_admin', 'order_admin', 'support_admin', 'content_admin']
+    );
+
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -130,7 +157,7 @@ const updateUserRole = async (req, res) => {
     }
 
     await UserModel.updateUserRole(req.params.userId, req.body.role);
-    
+
     res.json({
       success: true,
       message: `User role updated to ${req.body.role} successfully`
@@ -138,14 +165,14 @@ const updateUserRole = async (req, res) => {
   } catch (err) {
     console.error('Error in updateUserRole:', err);
     res.status(500).json({ success: false, message: 'Server error' });
-  } 
+  }
 };
-
 
 const requestEmailChange = async (req, res) => {
   try {
     const { newEmail } = req.body;
-    if (!newEmail) return res.status(400).json({ success: false, message: 'New email required' });
+    if (!newEmail)
+      return res.status(400).json({ success: false, message: 'New email required' });
 
     const otp = await UserModel.requestEmailChange(req.user.id, newEmail);
     await sendEmailVerificationOTP(newEmail, otp);

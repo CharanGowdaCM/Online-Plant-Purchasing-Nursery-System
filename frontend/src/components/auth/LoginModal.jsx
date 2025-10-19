@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import OTPVerification from './OTPVerification';
 import RegisterModal from './RegisterModal';
 import ForgotPassword from './ForgotPassword';
 
@@ -9,7 +8,6 @@ const LoginModal = ({ show, onHide }) => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showOTP, setShowOTP] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
@@ -49,7 +47,8 @@ const LoginModal = ({ show, onHide }) => {
     try {
       const response = await login(formData.email, formData.password);
       if (response.success) {
-        setShowOTP(true);
+        onHide();
+        window.location.reload(); // Refresh to update auth state
       }
     } catch (error) {
       setErrors({ 
@@ -58,12 +57,6 @@ const LoginModal = ({ show, onHide }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOTPSuccess = () => {
-    setShowOTP(false);
-    onHide();
-    window.location.reload(); // Refresh to update auth state
   };
 
   const handleSwitchToRegister = () => {
@@ -76,27 +69,20 @@ const LoginModal = ({ show, onHide }) => {
     setShowForgotPassword(true);
   };
 
-  if (showOTP) {
-    return (
-      <OTPVerification
-        show={showOTP}
-        onHide={() => setShowOTP(false)}
-        email={formData.email}
-        onSuccess={handleOTPSuccess}
-      />
-    );
-  }
-
   return (
     <>
-      <div className={`modal fade ${show ? 'show d-block' : ''}`} tabIndex="-1" style={{ backgroundColor: show ? 'rgba(0,0,0,0.5)' : 'transparent' }}>
+      <div
+        className={`modal fade ${show ? 'show d-block' : ''}`}
+        tabIndex="-1"
+        style={{ backgroundColor: show ? 'rgba(0,0,0,0.5)' : 'transparent' }}
+      >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header border-0">
               <h5 className="modal-title fw-bold">Login to Your Account</h5>
               <button type="button" className="btn-close" onClick={onHide}></button>
             </div>
-            
+
             <div className="modal-body">
               {errors.submit && (
                 <div className="alert alert-danger" role="alert">
@@ -175,7 +161,10 @@ const LoginModal = ({ show, onHide }) => {
                 >
                   {loading ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                      ></span>
                       Logging in...
                     </>
                   ) : (
