@@ -1,7 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, getUserRole } = useAuth();
+  const userRole = getUserRole();
 
   const customerMenuItems = [
     { icon: 'house', label: 'Home', path: '/' },
@@ -13,27 +14,46 @@ const Sidebar = ({ isOpen, onClose }) => {
     { icon: 'telephone', label: 'Contact Us', path: '/contact' },
   ];
 
-  const adminMenuItems = [
-    { icon: 'speedometer2', label: 'Dashboard', path: '/admin' },
-    { icon: 'box-seam', label: 'Inventory', path: '/admin/inventory' },
-    { icon: 'cart-check', label: 'Orders', path: '/admin/orders' },
-    { icon: 'people', label: 'Customers', path: '/admin/customers' },
-    { icon: 'life-preserver', label: 'Support Tickets', path: '/admin/support' },
-    { icon: 'file-text', label: 'Content', path: '/admin/content' },
-  ];
+  const adminMenuItems = {
+    super_admin: [
+      { icon: 'speedometer2', label: 'Dashboard', path: '/admin/system' },
+      { icon: 'box-seam', label: 'Inventory', path: '/admin/inventory' },
+      { icon: 'cart-check', label: 'Orders', path: '/admin/orders' },
+      { icon: 'headset', label: 'Support', path: '/admin/support' },
+      { icon: 'file-text', label: 'Content', path: '/admin/content' },
+      { icon: 'people', label: 'Users', path: '/admin/system/users' },
+    ],
+    inventory_admin: [
+      { icon: 'speedometer2', label: 'Dashboard', path: '/admin' },
+      { icon: 'box-seam', label: 'Inventory', path: '/admin/inventory' },
+      { icon: 'plus-circle', label: 'Add Product', path: '/admin/inventory/products' },
+    ],
+    order_admin: [
+      { icon: 'speedometer2', label: 'Dashboard', path: '/admin' },
+      { icon: 'cart-check', label: 'Orders', path: '/admin/orders' },
+    ],
+    support_admin: [
+      { icon: 'speedometer2', label: 'Dashboard', path: '/admin' },
+      { icon: 'headset', label: 'Support Tickets', path: '/admin/support' },
+    ],
+    content_admin: [
+      { icon: 'speedometer2', label: 'Dashboard', path: '/admin' },
+      { icon: 'file-text', label: 'Content', path: '/admin/content' },
+    ],
+  };
 
-  const menuItems = isAdmin ? adminMenuItems : customerMenuItems;
+  const menuItems = userRole !== 'customer' && userRole !== 'guest'
+    ? adminMenuItems[userRole] || []
+    : customerMenuItems;
 
   return (
     <>
-      {/* Overlay */}
       <div
         className={`offcanvas-backdrop fade ${isOpen ? 'show' : ''}`}
         onClick={onClose}
         style={{ display: isOpen ? 'block' : 'none' }}
       ></div>
 
-      {/* Sidebar */}
       <div
         className={`offcanvas offcanvas-start ${isOpen ? 'show' : ''}`}
         tabIndex="-1"
@@ -45,7 +65,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="offcanvas-header bg-success text-white">
           <h5 className="offcanvas-title">
             <i className="bi bi-list-ul me-2"></i>
-            {isAdmin ? 'Admin Menu' : 'Menu'}
+            {userRole !== 'customer' && userRole !== 'guest' ? 'Admin Menu' : 'Menu'}
           </h5>
           <button
             type="button"

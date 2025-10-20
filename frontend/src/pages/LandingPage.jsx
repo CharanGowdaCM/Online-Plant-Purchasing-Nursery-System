@@ -54,7 +54,7 @@ const LandingPage = () => {
   return (
     <div className="landing-page">
       {/* Hero Section */}
-      <section className="hero-section bg-success text-white py-5">
+      <section className="hero-section bg-success text-white py-3">
         <div className="container">
           <div className="row align-items-center">
             <div className="col-md-6">

@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     setLoading(false);
@@ -16,14 +15,6 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
-    if (response.success) {
-      setUser(response.user);
-    }
-    return response;
-  };
-
-  const verifyOTP = async (email, otp) => {
-    const response = await authService.verifyOTP(email, otp);
     if (response.success) {
       setUser(response.user);
     }
@@ -44,32 +35,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear all auth-related data
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       setUser(null);
     }
-  };
-
-  const isAdmin = () => {
-    return user && ['super_admin', 'inventory_admin', 'order_admin', 'support_admin', 'content_admin'].includes(user.role);
-  };
-
-  const isSuperAdmin = () => {
-    return user && user.role === 'super_admin';
-  };
-
-  const getUserRole = () => {
-    if (!user) return 'guest';
-    if (!user.role) return 'customer';
-    return user.role;
-  };
-
-  const hasAdminAccess = (requiredRole) => {
-    if (!user) return false;
-    if (user.role === 'super_admin') return true;
-    return user.role === requiredRole;
   };
 
   const updateUserProfile = (profile) => {
@@ -80,21 +50,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // IMPORTANT: These functions need to be defined
+  const getUserRole = () => {
+    if (!user) return 'guest';
+    if (!user.role) return 'customer';
+    return user.role;
+  };
+
+  const isAdmin = () => {
+    if (!user) return false;
+    return ['super_admin', 'inventory_admin', 'order_admin', 'support_admin', 'content_admin'].includes(user.role);
+  };
+
+  const hasAdminAccess = (requiredRole) => {
+    if (!user) return false;
+    if (user.role === 'super_admin') return true;
+    
+    // Special case: any admin can access common admin routes
+    if (requiredRole === 'any_admin') {
+      return ['super_admin', 'inventory_admin', 'order_admin', 'support_admin', 'content_admin'].includes(user.role);
+    }
+    
+    return user.role === requiredRole;
+  };
+
+  // IMPORTANT: All functions must be in this value object
+  const contextValue = {
+    user,
+    setUser,
+    login,
+    register,
+    logout,
+    loading,
+    updateUserProfile,
+    isAuthenticated: authService.isAuthenticated(),
+    isAdmin: isAdmin(),
+    getUserRole: getUserRole,  // explicitly passing the function
+    hasAdminAccess: hasAdminAccess  // explicitly passing the function
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      verifyOTP,
-      register, 
-      logout, 
-      loading,
-      updateUserProfile,
-      isAuthenticated: authService.isAuthenticated(),
-      isAdmin: isAdmin(),
-      isSuperAdmin: isSuperAdmin(),
-      getUserRole,
-      setUser
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

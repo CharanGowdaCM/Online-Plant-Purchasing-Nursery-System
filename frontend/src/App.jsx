@@ -6,141 +6,51 @@ import Sidebar from './components/common/Sidebar';
 import Footer from './components/common/Footer';
 import LandingPage from './pages/LandingPage';
 import CreateProfile from './pages/CreateProfile';
+import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import InventoryManagement from './pages/admin/InventoryManagement';
 import ProductManagement from './pages/admin/inventory/ProductManagement';
-
+import OrderManagement from './pages/admin/OrderManagement';
+import SupportManagement from './pages/admin/SupportManagement';
+import ContentManagement from './pages/admin/ContentManagement';
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import './App.css';
 
-// Protected Route Component
-const PrivateRoute = ({ children, allowPendingProfile = false }) => {
+const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  const pendingProfile = sessionStorage.getItem('pendingProfile');
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  // Allow access if user is authenticated OR if this is the create-profile page for a new signup
-  if (isAuthenticated || (allowPendingProfile && pendingProfile)) {
-    return children;
-  }
-  
-  return <Navigate to="/" />;
+  if (loading) return <div className="text-center py-5"><div className="spinner-border text-success"></div></div>;
+  return isAuthenticated ? children : <Navigate to="/" />;
 };
 
-// Role-based route guard
 const AdminRoute = ({ children, requiredRole }) => {
   const { user, loading, hasAdminAccess } = useAuth();
-  
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  // Super admin can access all admin routes
-  // Other admins can only access their specific routes
-  if (!user || (!hasAdminAccess(requiredRole))) {
-    return <Navigate to="/" replace />;
-  }
-  
+  if (loading) return <div className="text-center py-5"><div className="spinner-border text-success"></div></div>;
+  if (!user || !hasAdminAccess(requiredRole)) return <Navigate to="/" replace />;
   return children;
 };
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isAuthenticated } = useAuth();
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Redirect to appropriate dashboard based on role
-  const getHomeRoute = () => {
-    if (!user) return '/';
-    if (user.role.includes('admin') || user.role === 'super_admin') return '/admin';
-    return '/dashboard';
-  };
 
   return (
     <div className="App d-flex flex-column min-vh-100">
-      <Header onToggleSidebar={toggleSidebar} />
+      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <main className="flex-grow-1">
         <Routes>
-          {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/create-profile" element={<PrivateRoute><CreateProfile /></PrivateRoute>} />
+          <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
           
-          {/* User Routes */}
-          <Route 
-            path="/create-profile" 
-            element={
-              <PrivateRoute allowPendingProfile={true}>
-                <CreateProfile />
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <PrivateRoute>
-                <CreateProfile />
-              </PrivateRoute>
-            } 
-          />
-
-          {/* Admin Routes */}
-          <Route path="/admin">
-            {/* Admin Dashboard - accessible by all admins */}
-            <Route 
-              index 
-              element={
-                <AdminRoute requiredRole="any_admin">
-                  <AdminDashboard />
-                </AdminRoute>
-              } 
-            />
-
-            {/* Inventory Management */}
-            <Route 
-              path="inventory/*" 
-              element={
-                <AdminRoute requiredRole="inventory_admin">
-                  <Routes>
-                    <Route index element={<InventoryManagement />} />
-                    <Route path="products" element={<ProductManagement />} />
-                    {/* Uncomment when components are created
-                    <Route path="categories" element={<CategoryManagement />} />
-                    <Route path="stock" element={<StockManagement />} />
-                    */}
-                  </Routes>
-                </AdminRoute>
-              } 
-            />
-
-            {/* Other admin routes commented out until components are created
-            Order Management, Support Management, Content Management, and Super Admin Routes will be added here
-            */}
-          </Route>
-
-          {/* User Dashboard - Uncomment when component is created
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <UserDashboard />
-              </PrivateRoute>
-            }
-          />
-          */}
-
-          {/* Home Route - Redirects based on role */}
-          <Route
-            path="/home"
-            element={<Navigate to={getHomeRoute()} replace />}
-          />
-
-          {/* Catch-all redirect */}
+          <Route path="/admin" element={<AdminRoute requiredRole="any_admin"><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/inventory" element={<AdminRoute requiredRole="inventory_admin"><InventoryManagement /></AdminRoute>} />
+          <Route path="/admin/inventory/products" element={<AdminRoute requiredRole="inventory_admin"><ProductManagement /></AdminRoute>} />
+          <Route path="/admin/orders" element={<AdminRoute requiredRole="order_admin"><OrderManagement /></AdminRoute>} />
+          <Route path="/admin/support" element={<AdminRoute requiredRole="support_admin"><SupportManagement /></AdminRoute>} />
+          <Route path="/admin/content" element={<AdminRoute requiredRole="content_admin"><ContentManagement /></AdminRoute>} />
+          <Route path="/admin/system" element={<AdminRoute requiredRole="super_admin"><SuperAdminDashboard /></AdminRoute>} />
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

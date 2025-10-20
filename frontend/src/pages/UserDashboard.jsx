@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, ListGroup, Badge } from 'react-bootstrap';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const UserDashboard = () => {
   const { user } = useAuth();

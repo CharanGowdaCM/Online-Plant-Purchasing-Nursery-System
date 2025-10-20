@@ -1,292 +1,307 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
-import { useAuth } from '../../../context/AuthContext';
-import api from '../../../services/api';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import inventoryService from '../../../services/inventoryService';
+import productService from '../../../services/productService';
 
 const ProductManagement = () => {
-  const { hasAdminAccess } = useAuth();
-  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    price: '',
+    sku: '',
     category_id: '',
+    price: '',
+    compare_at_price: '',
+    description: '',
+    short_description: '',
+    botanical_name: '',
+    plant_type: '',
+    light_requirement: '',
+    water_requirement: '',
+    growth_rate: '',
+    mature_size: '',
+    care_level: 'easy',
+    pet_friendly: false,
     stock_quantity: '',
-    low_stock_threshold: '',
-    image_url: ''
+    reorder_level: '10',
+    max_order_quantity: '100'
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchData();
+    fetchCategories();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCategories = async () => {
     try {
-      setLoading(true);
-      const [productsRes, categoriesRes] = await Promise.all([
-        api.get('/admin/inventory/products'),
-        api.get('/admin/inventory/categories')
-      ]);
-
-      setProducts(productsRes.data.products);
-      setCategories(categoriesRes.data.categories);
+      const response = await productService.getCategories();
+      setCategories(response.data || []);
     } catch (err) {
-      setError('Failed to load product data');
-      console.error('Product fetch error:', err);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching categories:', err);
     }
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
-      if (selectedProduct) {
-        // Update existing product
-        await api.put(`/admin/inventory/products/${selectedProduct.id}`, formData);
-      } else {
-        // Add new product
-        await api.post('/admin/inventory/products', formData);
-      }
-      fetchData();
-      setShowAddModal(false);
-      setShowEditModal(false);
-      resetForm();
+      await inventoryService.addProduct(formData);
+      navigate('/admin/inventory');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save product');
+      setError(err.response?.data?.message || 'Failed to add product');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleEdit = (product) => {
-    setSelectedProduct(product);
-    setFormData({
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      category_id: product.category_id,
-      stock_quantity: product.stock_quantity,
-      low_stock_threshold: product.low_stock_threshold,
-      image_url: product.image_url
-    });
-    setShowEditModal(true);
-  };
-
-  const handleDelete = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    
-    try {
-      setLoading(true);
-      await api.delete(`/admin/inventory/products/${productId}`);
-      fetchData();
-    } catch (err) {
-      setError('Failed to delete product');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      category_id: '',
-      stock_quantity: '',
-      low_stock_threshold: '',
-      image_url: ''
-    });
-    setSelectedProduct(null);
-  };
-
-  if (loading && !products.length) return <div>Loading...</div>;
 
   return (
-    <div className="container-fluid p-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Product Management</h2>
-        <Button variant="primary" onClick={() => setShowAddModal(true)}>
-          Add New Product
-        </Button>
+    <div className="container-fluid py-4">
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <h2>Add New Product</h2>
+          <p className="text-muted">Add a new plant to your inventory</p>
+        </div>
+        <div className="col-md-6 text-end">
+          <button className="btn btn-outline-secondary" onClick={() => navigate('/admin/inventory')}>
+            <i className="bi bi-arrow-left me-2"></i>Back to Inventory
+          </button>
+        </div>
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
-      <Table responsive striped bordered hover>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map(product => (
-            <tr key={product.id}>
-              <td>{product.id}</td>
-              <td>
-                <img 
-                  src={product.image_url} 
-                  alt={product.name} 
-                  style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+      <form onSubmit={handleSubmit}>
+        <div className="card shadow-sm mb-4">
+          <div className="card-header bg-white">
+            <h5 className="mb-0">Basic Information</h5>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">Product Name *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
                 />
-              </td>
-              <td>{product.name}</td>
-              <td>{categories.find(c => c.id === product.category_id)?.name}</td>
-              <td>${product.price}</td>
-              <td>
-                {product.stock_quantity}
-                {product.stock_quantity <= product.low_stock_threshold && (
-                  <Badge bg="warning" className="ms-2">Low Stock</Badge>
-                )}
-              </td>
-              <td>
-                <Badge bg={product.active ? 'success' : 'danger'}>
-                  {product.active ? 'Active' : 'Inactive'}
-                </Badge>
-              </td>
-              <td>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  className="me-2"
-                  onClick={() => handleEdit(product)}
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">SKU *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Category *</label>
+                <select
+                  className="form-select"
+                  name="category_id"
+                  value={formData.category_id}
+                  onChange={handleChange}
+                  required
                 >
-                  Edit
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => handleDelete(product.id)}
-                >
-                  Delete
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      {/* Add/Edit Product Modal */}
-      <Modal show={showAddModal || showEditModal} onHide={() => {
-        setShowAddModal(false);
-        setShowEditModal(false);
-        resetForm();
-      }}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {selectedProduct ? 'Edit Product' : 'Add New Product'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Category</Form.Label>
-              <Form.Select
-                value={formData.category_id}
-                onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                required
-              >
-                <option value="">Select Category</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Price</Form.Label>
-              <Form.Control
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Stock Quantity</Form.Label>
-              <Form.Control
-                type="number"
-                value={formData.stock_quantity}
-                onChange={(e) => setFormData({...formData, stock_quantity: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Low Stock Threshold</Form.Label>
-              <Form.Control
-                type="number"
-                value={formData.low_stock_threshold}
-                onChange={(e) => setFormData({...formData, low_stock_threshold: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Image URL</Form.Label>
-              <Form.Control
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                required
-              />
-            </Form.Group>
-
-            <div className="d-flex justify-content-end">
-              <Button variant="secondary" className="me-2" onClick={() => {
-                setShowAddModal(false);
-                setShowEditModal(false);
-                resetForm();
-              }}>
-                Cancel
-              </Button>
-              <Button variant="primary" type="submit">
-                {selectedProduct ? 'Update Product' : 'Add Product'}
-              </Button>
+                  <option value="">Select Category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Botanical Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="botanical_name"
+                  value={formData.botanical_name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Plant Type</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="plant_type"
+                  value={formData.plant_type}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label">Short Description</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="short_description"
+                  value={formData.short_description}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-control"
+                  name="description"
+                  rows="4"
+                  value={formData.description}
+                  onChange={handleChange}
+                ></textarea>
+              </div>
             </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+          </div>
+        </div>
+
+        <div className="card shadow-sm mb-4">
+          <div className="card-header bg-white">
+            <h5 className="mb-0">Plant Care Details</h5>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-3">
+                <label className="form-label">Light Requirement</label>
+                <select className="form-select" name="light_requirement" value={formData.light_requirement} onChange={handleChange}>
+                  <option value="">Select</option>
+                  <option value="Low Light">Low Light</option>
+                  <option value="Medium Light">Medium Light</option>
+                  <option value="Bright Light">Bright Light</option>
+                  <option value="Direct Sunlight">Direct Sunlight</option>
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Water Requirement</label>
+                <select className="form-select" name="water_requirement" value={formData.water_requirement} onChange={handleChange}>
+                  <option value="">Select</option>
+                  <option value="Low Water">Low Water</option>
+                  <option value="Medium Water">Medium Water</option>
+                  <option value="High Water">High Water</option>
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Care Level</label>
+                <select className="form-select" name="care_level" value={formData.care_level} onChange={handleChange}>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="difficult">Difficult</option>
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Growth Rate</label>
+                <input type="text" className="form-control" name="growth_rate" value={formData.growth_rate} onChange={handleChange} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Mature Size</label>
+                <input type="text" className="form-control" name="mature_size" value={formData.mature_size} onChange={handleChange} />
+              </div>
+              <div className="col-md-6">
+                <div className="form-check mt-4">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="pet_friendly"
+                    name="pet_friendly"
+                    checked={formData.pet_friendly}
+                    onChange={handleChange}
+                  />
+                  <label className="form-check-label" htmlFor="pet_friendly">
+                    Pet Friendly
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card shadow-sm mb-4">
+          <div className="card-header bg-white">
+            <h5 className="mb-0">Pricing & Inventory</h5>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-3">
+                <label className="form-label">Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-control"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Compare at Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-control"
+                  name="compare_at_price"
+                  value={formData.compare_at_price}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-2">
+                <label className="form-label">Stock Quantity *</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="stock_quantity"
+                  value={formData.stock_quantity}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-2">
+                <label className="form-label">Reorder Level</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="reorder_level"
+                  value={formData.reorder_level}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-2">
+                <label className="form-label">Max Order Qty</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="max_order_quantity"
+                  value={formData.max_order_quantity}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="d-flex gap-2">
+          <button type="submit" className="btn btn-success" disabled={loading}>
+            {loading ? 'Adding Product...' : 'Add Product'}
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/inventory')}>
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

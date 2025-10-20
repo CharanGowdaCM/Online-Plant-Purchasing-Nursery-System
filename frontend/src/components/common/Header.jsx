@@ -6,13 +6,13 @@ import LoginModal from '../auth/LoginModal';
 const Header = ({ onToggleSidebar }) => {
   const { user, isAuthenticated, logout, getUserRole } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const userRole = getUserRole();
 
   const handleLogout = async () => {
     try {
       await logout();
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -45,12 +45,11 @@ const Header = ({ onToggleSidebar }) => {
           </button>
 
           <div className="collapse navbar-collapse" id="navbarContent">
-            {/* Navigation Links */}
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <a className="nav-link" href="/">Home</a>
               </li>
-              {userRole !== 'guest' && (
+              {isAuthenticated && userRole === 'customer' && (
                 <li className="nav-item">
                   <a className="nav-link" href="/dashboard">Dashboard</a>
                 </li>
@@ -108,11 +107,6 @@ const Header = ({ onToggleSidebar }) => {
                             System Administration
                           </a>
                         </li>
-                        <li>
-                          <a className="dropdown-item" href="/admin/system/users">
-                            User Management
-                          </a>
-                        </li>
                       </>
                     )}
                   </ul>
@@ -120,7 +114,6 @@ const Header = ({ onToggleSidebar }) => {
               )}
             </ul>
 
-            {/* Search Form */}
             <form className="d-flex mx-auto my-2 my-lg-0" style={{ width: '40%' }}>
               <div className="input-group">
                 <input
@@ -146,39 +139,39 @@ const Header = ({ onToggleSidebar }) => {
                       data-bs-toggle="dropdown"
                     >
                       <i className="bi bi-person-circle fs-4 me-2"></i>
-                      <span>{user?.profile?.first_name || user?.first_name || 'User'}</span>
+                      <span>{user?.first_name || 'User'}</span>
                     </a>
                     <ul className="dropdown-menu dropdown-menu-end">
-                      <li>
-                        <a className="dropdown-item" href="/dashboard">
-                          <i className="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="/profile">
-                          <i className="bi bi-person me-2"></i>My Profile
-                        </a>
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="/orders">
-                          <i className="bi bi-box-seam me-2"></i>My Orders
-                        </a>
-                      </li>
-                      {userRole === 'user' && (
-                        <li>
-                          <a className="dropdown-item" href="/wishlist">
-                            <i className="bi bi-heart me-2"></i>Wishlist
-                          </a>
-                        </li>
+                      {userRole === 'customer' && (
+                        <>
+                          <li>
+                            <a className="dropdown-item" href="/dashboard">
+                              <i className="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                          </li>
+                          <li>
+                            <a className="dropdown-item" href="/profile">
+                              <i className="bi bi-person me-2"></i>My Profile
+                            </a>
+                          </li>
+                          <li>
+                            <a className="dropdown-item" href="/orders">
+                              <i className="bi bi-box-seam me-2"></i>My Orders
+                            </a>
+                          </li>
+                          <li><hr className="dropdown-divider" /></li>
+                        </>
                       )}
-                      {userRole.includes('admin') && (
-                        <li>
-                          <a className="dropdown-item" href="/admin">
-                            <i className="bi bi-gear me-2"></i>Admin Panel
-                          </a>
-                        </li>
+                      {userRole !== 'customer' && userRole !== 'guest' && (
+                        <>
+                          <li>
+                            <a className="dropdown-item" href="/admin">
+                              <i className="bi bi-gear me-2"></i>Admin Panel
+                            </a>
+                          </li>
+                          <li><hr className="dropdown-divider" /></li>
+                        </>
                       )}
-                      <li><hr className="dropdown-divider" /></li>
                       <li>
                         <button className="dropdown-item text-danger" onClick={handleLogout}>
                           <i className="bi bi-box-arrow-right me-2"></i>Logout
@@ -187,14 +180,16 @@ const Header = ({ onToggleSidebar }) => {
                     </ul>
                   </li>
                   
-                  <li className="nav-item ms-3">
-                    <a className="nav-link position-relative" href="/cart">
-                      <i className="bi bi-cart3 fs-4"></i>
-                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        0
-                      </span>
-                    </a>
-                  </li>
+                  {userRole === 'customer' && (
+                    <li className="nav-item ms-3">
+                      <a className="nav-link position-relative" href="/cart">
+                        <i className="bi bi-cart3 fs-4"></i>
+                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                          0
+                        </span>
+                      </a>
+                    </li>
+                  )}
                 </>
               ) : (
                 <li className="nav-item">
