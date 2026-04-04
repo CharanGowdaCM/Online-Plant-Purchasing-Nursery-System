@@ -1,4 +1,3 @@
-// utils/validators/reviewValidator.js
 
 const validateReview = (data) => {
   const errors = {};

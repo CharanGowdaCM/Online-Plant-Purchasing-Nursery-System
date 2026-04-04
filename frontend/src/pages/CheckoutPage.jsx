@@ -143,7 +143,7 @@ const CheckoutPage = () => {
         key: paymentResponse.data.key,
         amount: finalAmount * 100,
         currency: "INR",
-        name: "Plant Nursery",
+        name: "Bleaf",
         description: "Plant Purchase Payment",
         order_id: paymentResponse.data.razorpayOrderId,
         handler: async (response) => {
@@ -355,7 +355,14 @@ const CheckoutPage = () => {
                         border: '2px solid #E5E7EB'
                       }}>
                         <img
-                          src={item.products.image_url}
+                          src={(() => {
+                            try {
+                              const parsed = JSON.parse(item.products.image_url);
+                              return parsed.image_url?.replace(/\/$/, '') || '';
+                            } catch (error) {
+                              return item.products.image_url?.replace(/\/$/, '') || '';
+                            }
+                          })()}
                           alt={item.products.name}
                           style={{
                             width: '100%',

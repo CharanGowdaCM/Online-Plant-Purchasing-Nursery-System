@@ -1,5 +1,3 @@
-// src/utils/validators/supportTicketValidator.js
-
 const SupportTicketModel = require('../../src/models/supportTicketModel');
 
 const ALLOWED_CATEGORIES = SupportTicketModel.TICKET_CATEGORIES || [

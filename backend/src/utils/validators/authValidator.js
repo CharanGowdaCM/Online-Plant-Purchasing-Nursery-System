@@ -1,4 +1,3 @@
-// utils/validators/authValidator.js
 
 /**
  * Auth Validators - Input validation utilities for authentication
@@ -18,11 +17,7 @@ const VALID_ROLES = [
   'super_admin'
 ];
 
-/**
- * Validate email format
- * @param {string} email - Email address to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validateEmail = (email) => {
   if (!email) {
     return { isValid: false, message: "Email is required" };
@@ -46,11 +41,7 @@ const validateEmail = (email) => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate password strength
- * @param {string} password - Password to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validatePassword = (password) => {
   if (!password) {
     return { isValid: false, message: "Password is required" };
@@ -90,11 +81,7 @@ const validatePassword = (password) => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate OTP format
- * @param {string} otp - OTP to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validateOTP = (otp) => {
   if (!otp) {
     return { isValid: false, message: "OTP is required" };
@@ -104,19 +91,11 @@ const validateOTP = (otp) => {
     return { isValid: false, message: "OTP must be a string" };
   }
 
-  // if (!/^\d{6}$/.test(otp)) {
-  //   return { isValid: false, message: "OTP must be a 6-digit number" };
-  // }
 
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate name
- * @param {string} name - Name to validate
- * @param {string} fieldName - Field name for error message
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validateName = (name, fieldName = "Name") => {
   if (!name) {
     return { isValid: false, message: `${fieldName} is required` };
@@ -153,11 +132,7 @@ const validateName = (name, fieldName = "Name") => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate phone number (international format)
- * @param {string} phone - Phone number to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validatePhoneNumber = (phone) => {
   if (!phone) {
     return { isValid: false, message: "Phone number is required" };
@@ -180,11 +155,7 @@ const validatePhoneNumber = (phone) => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate token format
- * @param {string} token - Token to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validateToken = (token) => {
   if (!token) {
     return { isValid: false, message: "Token is required" };
@@ -202,11 +173,7 @@ const validateToken = (token) => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate signup request
- * @param {Object} data - Signup data
- * @returns {Object} { isValid: boolean, errors: Object }
- */
+
 const validateSignupRequest = (data) => {
   const errors = {};
 
@@ -230,11 +197,7 @@ const validateSignupRequest = (data) => {
   };
 };
 
-/**
- * Validate login request
- * @param {Object} data - Login data
- * @returns {Object} { isValid: boolean, errors: Object }
- */
+
 const validateLoginRequest = (data) => {
   const errors = {};
 
@@ -252,11 +215,7 @@ const validateLoginRequest = (data) => {
   };
 };
 
-/**
- * Validate password reset request
- * @param {Object} data - Reset request data
- * @returns {Object} { isValid: boolean, errors: Object }
- */
+
 const validateResetRequest = (data) => {
   const errors = {};
 
@@ -280,11 +239,7 @@ const validateResetRequest = (data) => {
   };
 };
 
-/**
- * Validate refresh token request
- * @param {string} refreshToken - Refresh token to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
+
 const validateRefreshToken = (refreshToken) => {
   if (!refreshToken) {
     return { isValid: false, message: "Refresh token is required" };
@@ -297,11 +252,6 @@ const validateRefreshToken = (refreshToken) => {
   return { isValid: true, message: "" };
 };
 
-/**
- * Validate role
- * @param {string} role - Role to validate
- * @returns {Object} { isValid: boolean, message: string }
- */
 const validateRole = (role) => {
   if (!role) {
     return { isValid: false, message: 'Role is required' };
@@ -312,11 +262,6 @@ const validateRole = (role) => {
   return { isValid: true };
 };
 
-/**
- * Validate admin creation request
- * @param {Object} data - Admin data
- * @returns {Object} { isValid: boolean, errors: Object }
- */
 const validateAdminCreation = (data) => {
   const errors = {};
 

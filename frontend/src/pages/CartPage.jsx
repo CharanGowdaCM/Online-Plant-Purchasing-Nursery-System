@@ -18,10 +18,6 @@ const CartPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
     fetchCart();
   }, [isAuthenticated, navigate]);
 
@@ -47,7 +43,7 @@ const CartPage = () => {
         fetchCart();
       }
     } catch (err) {
-      setError(err.message || 'Failed to update quantity');
+      setError(err.response.data.message || 'Failed to update quantity');
     }
   };
 
@@ -256,7 +252,14 @@ const CartPage = () => {
                               border: '3px solid #E5E7EB'
                             }}>
                               <img
-                                src={item.products.image_url}
+                                src={(() => {
+                                  try {
+                                    const parsed = JSON.parse(item.products.image_url);
+                                    return parsed.image_url?.replace(/\/$/, '') || '';
+                                  } catch (error) {
+                                    return item.products.image_url?.replace(/\/$/, '') || '';
+                                  }
+                                })()}
                                 alt={item.products.name}
                                 style={{
                                   width: '100%',

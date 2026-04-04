@@ -29,7 +29,6 @@ const validateInventoryData = (mode) => (req, res, next) => {
       errors.stock_quantity = 'Stock quantity must be a non-negative integer';
     }
   } else if (mode === 'edit') {
-    // For edit mode, validate only the fields that are provided
     if (data.price !== undefined && (typeof data.price !== 'number' || data.price <= 0)) {
       errors.price = 'Price must be a positive number';
     }

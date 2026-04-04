@@ -98,22 +98,12 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
-/**
- * Validate email format
- * @param {string} email - Email address
- * @returns {boolean} True if valid
- */
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 
-/**
- * Send OTP email
- * @param {string} email - Recipient email
- * @param {string} otp - OTP code
- */
 const sendOTPEmail = async (email, otp) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER || "akhileshkoppala@gmail.com",
@@ -172,10 +162,7 @@ const sendOTPEmail = async (email, otp) => {
   });
 };
 
-/**
- * Send welcome email
- * @param {string} email - Recipient email
- */
+
 const sendWelcomeEmail = async (email) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER || "akhileshkoppala@gmail.com",
@@ -235,11 +222,6 @@ const sendWelcomeEmail = async (email) => {
   });
 };
 
-/**
- * Send password reset email
- * @param {string} email - Recipient email
- * @param {string} token - Reset token
- */
 const sendPasswordResetEmail = async (email, token) => {
   const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
@@ -309,10 +291,7 @@ const sendPasswordResetEmail = async (email, token) => {
   });
 };
 
-/**
- * Send password changed confirmation email
- * @param {string} email - Recipient email
- */
+
 const sendPasswordChangedEmail = async (email) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER || "akhileshkoppala@gmail.com",
@@ -382,11 +361,6 @@ const sendPasswordChangedEmail = async (email) => {
   });
 };
 
-/**
- * @route   POST /api/auth/signup/send-otp
- * @desc    Send OTP for signup verification
- * @access  Public
- */
 const sendSignupOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -432,11 +406,7 @@ const sendSignupOTP = async (req, res) => {
   }
 };
 
-/**
- * @route   POST /api/auth/signup/verify-otp
- * @desc    Verify OTP and create user account
- * @access  Public
- */
+
 const verifySignupOTP = async (req, res) => {
   try {
     const { email, otp, password } = req.body;
@@ -475,11 +445,8 @@ const verifySignupOTP = async (req, res) => {
       });
     }
     console.log("done6");
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    // Create user
-    
     const newUser = await AuthModel.createUser({
       email,
       password_hash: hashedPassword,
@@ -599,14 +566,12 @@ const login = async (req, res) => {
       userAgent: req.headers['user-agent']
     });
 
-    // Update last login (don't wait for it)
    const previousLoginTime = user.last_login;
    console.log('Previous login time:', previousLoginTime);
     AuthModel.updateLastLogin(user.id).catch(err =>
       console.error("Error updating last login:", err)
     );
 
-    // Log login activity (create temporary req object with user context since req.user doesn't exist yet)
     if (req.supabase) {
       const logReq = { ...req, user: { id: user.id } };
       recordActivity(logReq, 'LOGIN', 'User', user.id, {
@@ -638,11 +603,6 @@ const login = async (req, res) => {
   }
 };
 
-/**
- * @route   POST /api/auth/refresh-token
- * @desc    Refresh access token using refresh token
- * @access  Public
- */
 const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -654,7 +614,6 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    // Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
     
     // Check if session is still active
@@ -765,7 +724,7 @@ const forgotPassword = async (req, res) => {
     res.json({ 
       success: true, 
       message: "Password reset link sent to your email!",
-      expiresIn: PASSWORD_RESET_EXPIRY_MINUTES * 60 // seconds
+      expiresIn: PASSWORD_RESET_EXPIRY_MINUTES * 60 
     });
   } catch (err) {
     console.error("Error in forgotPassword:", err);
@@ -821,16 +780,11 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
 
-    // Update user password
     await AuthModel.updatePassword(resetData.email, hashedPassword);
-
-    // Mark reset token as used
     await AuthModel.markPasswordResetTokenAsUsed(token);
 
-    // Get user ID for activity logging
     const user = await AuthModel.findUserByEmail(resetData.email);
     
     // Log password reset activity

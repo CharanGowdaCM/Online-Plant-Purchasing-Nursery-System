@@ -29,25 +29,48 @@ class OrderModel {
 
     //console.log('createOrder:', items);
 
+    // VALIDATION PHASE - Must complete successfully before creating order
     for (const item of items) {
-      try {
-        const quantity = Number(item.quantity ?? 0);
-        if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new Error(`Invalid quantity for product ${item.product_id}`);
-        }
+      const quantity = Number(item.quantity ?? 0);
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        const error = new Error(`Invalid quantity for product ${item.product_id}`);
+        console.error('[createOrder] Validation failed:', error.message);
+        throw error;
+      }
 
-        const stockRes = await InventoryModel.checkStock(item.product_id, quantity);
+      // Fetch product details including max_order_quantity
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('name, max_order_quantity')
+        .eq('id', item.product_id)
+        .single();
 
-        if (stockRes && typeof stockRes === 'object') {
-          if (stockRes.available === false) {
-            throw new Error(`Insufficient stock for product ${item.product_id}: ${stockRes.message ?? 'not available'}`);
-          }
+      if (productError || !product) {
+        const error = new Error(`Product not found: ${item.product_id}`);
+        console.error('[createOrder] Validation failed:', error.message);
+        throw error;
+      }
+
+      // Check max order quantity limit
+      if (product.max_order_quantity && quantity > product.max_order_quantity) {
+        const error = new Error(`Maximum order quantity is ${product.max_order_quantity} for ${product.name}. You tried to order ${quantity}.`);
+        console.error('[createOrder] Validation failed:', error.message);
+        throw error;
+      }
+
+      // Check stock availability
+      const stockRes = await InventoryModel.checkStock(item.product_id, quantity);
+
+      if (stockRes && typeof stockRes === 'object') {
+        if (stockRes.available === false) {
+          const error = new Error(`Insufficient stock for ${product.name}: ${stockRes.message ?? 'not available'}`);
+          console.error('[createOrder] Validation failed:', error.message);
+          throw error;
         }
-      } catch (err) {
-        console.error('[createOrder] error during stock check for item', item, err);
-        throw err;
       }
     }
+    
+    console.log('[createOrder] All validations passed, proceeding with order creation');
     const subtotal = items.reduce((sum, item) => {
       const price = Number(item.price ?? 0);
       const qty = Number(item.quantity ?? 0);
@@ -97,57 +120,68 @@ class OrderModel {
       throw orderError;
     }
 
-    const orderItems = [];
-    for (const item of items) {
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('name, sku')
-        .eq('id', item.product_id)
-        .single();
+    try {
+      // Build order items
+      const orderItems = [];
+      for (const item of items) {
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('name, sku')
+          .eq('id', item.product_id)
+          .single();
 
-      if (productError) {
-        console.error('[createOrder] failed to fetch product data for', item.product_id, productError);
-        throw productError;
+        if (productError) {
+          console.error('[createOrder] failed to fetch product data for', item.product_id, productError);
+          throw productError;
+        }
+
+        orderItems.push({
+          order_id: order.id,
+          product_id: item.product_id,
+          product_name: productData?.name ?? 'Unknown Product',
+          product_sku: productData?.sku ?? 'SKU-UNKNOWN',
+          quantity: item.quantity,
+          unit_price: Number(item.price ?? 0),
+          subtotal: Number((item.quantity * (item.price ?? 0)).toFixed(2))
+        });
       }
 
-      orderItems.push({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_name: productData?.name ?? 'Unknown Product',
-        product_sku: productData?.sku ?? 'SKU-UNKNOWN',
-        quantity: item.quantity,
-        unit_price: Number(item.price ?? 0),
-        subtotal: Number((item.quantity * (item.price ?? 0)).toFixed(2))
-      });
+      // Insert order items
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) {
+        console.error('[createOrder] order_items insert failed', itemsError);
+        throw itemsError;
+      }
+
+      // Update inventory
+      for (const item of items) {
+        const productId = item.product_id;
+        await InventoryModel.updateStock(productId, Number(item.quantity ?? 0), 'decrease');
+        await InventoryModel.checkAndNotifyLowStock(productId);
+      }
+
+      // Create status history
+      const { error: historyError } = await supabase
+        .from('order_status_history')
+        .insert({
+          order_id: order.id,
+          status: 'pending',
+          notes: 'Order placed successfully',
+          updated_by: userId,
+        });
+
+      if (historyError) {
+        console.error('[createOrder] history insert failed', historyError);
+        throw historyError;
+      }
+
+      return order;
+    } catch (postOrderError) {
+      // Rollback: Delete the order if any subsequent operation fails
+      console.error('[createOrder] Error after order creation, rolling back order:', order.id);
+      await supabase.from('orders').delete().eq('id', order.id);
+      throw postOrderError;
     }
-
-    const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-    if (itemsError) {
-      console.error('[createOrder] order_items insert failed', itemsError);
-      throw itemsError;
-    }
-
-    for (const item of items) {
-      const productId = item.product_id;
-      await InventoryModel.updateStock(productId, Number(item.quantity ?? 0), 'decrease');
-      await InventoryModel.checkAndNotifyLowStock(productId);
-    }
-
-    const { error: historyError } = await supabase
-      .from('order_status_history')
-      .insert({
-        order_id: order.id,
-        status: 'pending',
-        notes: 'Order placed successfully',
-        updated_by: userId,
-      });
-
-    if (historyError) {
-      console.error('[createOrder] history insert failed', historyError);
-      throw historyError;
-    }
-
-    return order;
   } catch (err) {
     console.error('[createOrder] caught error:', err);
     throw err;

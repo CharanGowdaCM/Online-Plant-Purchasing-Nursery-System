@@ -89,9 +89,6 @@ const validateOrderUpdate = (data) => {
   }
 
   if (data.status === 'shipped' || data.status === 'out_for_delivery') {
-    // if (!data.trackingNumber?.trim()) {
-    //   errors.trackingNumber = 'Tracking number required for shipping';
-    // }
     if (!data.shippingPartner?.trim()) {
       errors.shippingPartner = 'Shipping partner required';
     }
@@ -107,8 +104,8 @@ const isValidStatusTransition = (currentStatus, newStatus) => {
   const validTransitions = {
     pending: ['confirmed'],
     confirmed: ['processing'],
-    processing: ['packed'],
-    packed: ['shipped'],
+    processing: ['packed' ],
+    packed: ['shipped', 'processing'],
     shipped: ['out_for_delivery'],
     out_for_delivery: ['delivered']
   };

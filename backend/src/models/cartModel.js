@@ -55,6 +55,16 @@ class CartModel {
   }
 
   static async addToCart(userId, productId, quantity) {
+  // Fetch product details including price and max_order_quantity
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('price, max_order_quantity')
+    .eq('id', productId)
+    .single();
+
+  if (productError) throw productError;
+  if (!product) throw new Error('Product not found');
+
   // Check stock availability
   const stockCheck = await InventoryModel.checkStock(productId, quantity);
   if (!stockCheck.available) {
@@ -82,15 +92,6 @@ class CartModel {
     cartId = existingCart.id;
   }
 
-  // Fetch current product price
-  const { data: product, error: productError } = await supabase
-    .from('products')
-    .select('price')
-    .eq('id', productId)
-    .single();
-
-  if (productError) throw productError;
-
   // Check existing cart item
   const { data: existingItem } = await supabase
     .from('cart_items')
@@ -100,8 +101,15 @@ class CartModel {
     .maybeSingle();
 
   if (existingItem) {
-    // Update quantity and price
+    // Calculate new quantity
     const newQuantity = existingItem.quantity + quantity;
+    
+    // Check max order quantity limit
+    if (product.max_order_quantity && newQuantity > product.max_order_quantity) {
+      throw new Error(`Maximum order quantity is ${product.max_order_quantity} for this product. You currently have ${existingItem.quantity} in cart.`);
+    }
+
+    // Update quantity and price
     const { error: updateError } = await supabase
       .from('cart_items')
       .update({
@@ -112,6 +120,11 @@ class CartModel {
 
     if (updateError) throw updateError;
   } else {
+    // Check max order quantity for new items
+    if (product.max_order_quantity && quantity > product.max_order_quantity) {
+      throw new Error(`Maximum order quantity is ${product.max_order_quantity} for this product.`);
+    }
+
     // Add new item with price
     const { error: insertError } = await supabase
       .from('cart_items')

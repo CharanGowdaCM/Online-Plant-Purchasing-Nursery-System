@@ -564,7 +564,7 @@ const sendTicketStatusUpdate = async (ticket, user) => {
               
               <div class="content">
                 <h2 class="greeting">${status.emoji} Ticket Status Updated</h2>
-                <p class="message">Dear ${user.first_name || user.name},</p>
+                <p class="message">Dear ${ticket.customer_name || user.name},</p>
                 <p class="message">
                   Your support ticket <strong>"${ticket.subject}"</strong> has been updated.
                 </p>

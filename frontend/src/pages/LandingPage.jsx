@@ -15,7 +15,9 @@ import bleafLogo from '../assets/bleaf_logo-2.png';
 // Import carousel images
 import carouselImg1 from '../assets/Lakshya.jpg';
 import carouselImg2 from '../assets/Charan.jpg';
-import carouselImg3 from '../assets/Akhilesh.jpg';
+import carouselImg3 from '../assets/Shiva_sai.jpeg';
+import carouselImg4 from '../assets/Hemanth.jpeg';
+import carouselImg5 from '../assets/Hemanth2.jpeg';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -42,6 +44,8 @@ const LandingPage = () => {
     carouselImg1,
     carouselImg2,
     carouselImg3,
+    carouselImg4,
+    carouselImg5,
   ];
 
   // Text animation effect

@@ -56,9 +56,9 @@ class CartController {
       });
     } catch (error) {
       console.error('Error in addToCart:', error);
-      res.status(500).json({
+      res.status(400).json({
         success: false,
-        message: 'Failed to add item to cart'
+        message: error.message || 'Failed to add item to cart'
       });
     }
   }
@@ -83,9 +83,9 @@ class CartController {
       });
     } catch (error) {
       console.error('Error in updateCartItem:', error);
-      res.status(500).json({
+      res.status(400).json({
         success: false,
-        message: 'Failed to update cart item'
+        message: error.message || 'Failed to update cart item'
       });
     }
   }

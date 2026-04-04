@@ -7,9 +7,6 @@
  * blog grid, and detailed modal view with tags, images, and metadata.
  */
 
-
-
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import contentService from '../services/contentService';

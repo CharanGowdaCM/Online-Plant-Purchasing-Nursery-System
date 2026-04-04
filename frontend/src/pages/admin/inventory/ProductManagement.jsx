@@ -10,11 +10,10 @@ const ProductManagement = () => {
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
-    category_id: '',
-    price: '',
-    compare_at_price: '',
     description: '',
     short_description: '',
+    price: '',
+    compare_at_price: '',
     botanical_name: '',
     plant_type: '',
     light_requirement: '',
@@ -24,8 +23,11 @@ const ProductManagement = () => {
     care_level: 'easy',
     pet_friendly: false,
     stock_quantity: '',
-    reorder_level: '10',
-    max_order_quantity: '100',
+    min_stock_threshold: '',
+    max_order_quantity: '',
+    is_active: true,
+    is_featured: false,
+    category_id: '',
     images: []
   });
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -135,13 +137,10 @@ const ProductManagement = () => {
       const payload = {
         name: formData.name,
         sku: formData.sku,
-        category_id: formData.category_id,
-        price: formData.price ? parseFloat(formData.price) : 0,
-        compare_at_price: formData.compare_at_price
-          ? parseFloat(formData.compare_at_price)
-          : null,
         description: formData.description,
         short_description: formData.short_description,
+        price: parseFloat(formData.price),
+        compare_at_price: formData.compare_at_price ? parseFloat(formData.compare_at_price) : null,
         botanical_name: formData.botanical_name,
         plant_type: formData.plant_type,
         light_requirement: formData.light_requirement,
@@ -149,16 +148,13 @@ const ProductManagement = () => {
         growth_rate: formData.growth_rate,
         mature_size: formData.mature_size,
         care_level: formData.care_level,
-        pet_friendly: !!formData.pet_friendly,
-        stock_quantity: formData.stock_quantity
-          ? parseInt(formData.stock_quantity, 10)
-          : 0,
-        reorder_level: formData.reorder_level
-          ? parseInt(formData.reorder_level, 10)
-          : 10,
-        max_order_quantity: formData.max_order_quantity
-          ? parseInt(formData.max_order_quantity, 10)
-          : 100,
+        pet_friendly: formData.pet_friendly,
+        stock_quantity: parseInt(formData.stock_quantity) || 0,
+        min_stock_threshold: parseInt(formData.min_stock_threshold) || 0,
+        max_order_quantity: parseInt(formData.max_order_quantity) || 0,
+        is_active: formData.is_active,
+        is_featured: formData.is_featured,
+        category_id: formData.category_id || null,
         images: imagesPayload
       };
 
@@ -179,33 +175,80 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="container-fluid py-4">
-      <div className="row mb-4">
-        <div className="col-md-6">
-          <h2>Add New Product</h2>
-          <p className="text-muted">Add a new plant to your inventory</p>
-        </div>
-        <div className="col-md-6 text-end">
-          <button
-            className="btn btn-outline-secondary"
-            onClick={() => navigate('/admin/inventory')}
-          >
-            <i className="bi bi-arrow-left me-2"></i>Back to Inventory
-          </button>
-        </div>
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      <form onSubmit={handleSubmit}>
-        <div className="card shadow-sm mb-4">
-          <div className="card-header bg-white">
-            <h5 className="mb-0">Basic Information</h5>
+    <div style={{ backgroundColor: '#F5F1E8', minHeight: '100vh', paddingBottom: '2rem' }}>
+      <div className="container-fluid py-4">
+        {/* Header Section */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 style={{ color: '#2C5F2D', fontWeight: '700', marginBottom: '0.5rem' }}>
+                  <i className="bi bi-plus-circle-fill me-2"></i>
+                  Add New Product
+                </h2>
+                <p style={{ color: '#6B7B5F', marginBottom: 0 }}>Add a new plant to your inventory</p>
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => navigate('/admin/inventory')}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#2C5F2D',
+                  border: '2px solid #2C5F2D',
+                  borderRadius: '10px',
+                  padding: '0.6rem 1.5rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2C5F2D';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                  e.currentTarget.style.color = '#2C5F2D';
+                }}
+              >
+                <i className="bi bi-arrow-left me-2"></i>Back to Inventory
+              </button>
+            </div>
           </div>
-          <div className="card-body">
+        </div>
+
+        {error && (
+          <div className="alert alert-danger" style={{ borderRadius: '12px', border: 'none' }}>
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information */}
+          <div 
+            className="card border-0 shadow-sm mb-4"
+            style={{ borderRadius: '16px', overflow: 'hidden' }}
+          >
+            <div 
+              className="card-header"
+              style={{
+                background: 'linear-gradient(135deg, #2C5F2D 0%, #3a7d52 100%)',
+                color: '#FFFFFF',
+                padding: '1.25rem 1.5rem',
+                borderBottom: 'none'
+              }}
+            >
+              <h5 className="mb-0" style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+                <i className="bi bi-info-circle-fill me-2"></i>
+                Basic Information
+              </h5>
+            </div>
+          <div className="card-body" style={{ padding: '1.5rem' }}>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label">Product Name *</label>
+                <label className="form-label fw-semibold" style={{ color: '#2C5F2D' }}>
+                  Product Name *
+                </label>
                 <input
                   type="text"
                   className="form-control"
@@ -213,10 +256,17 @@ const ProductManagement = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  style={{
+                    borderRadius: '10px',
+                    border: '2px solid #E5E7EB',
+                    padding: '0.75rem'
+                  }}
                 />
               </div>
               <div className="col-md-3">
-                <label className="form-label">SKU *</label>
+                <label className="form-label fw-semibold" style={{ color: '#2C5F2D' }}>
+                  SKU *
+                </label>
                 <input
                   type="text"
                   className="form-control"
@@ -437,14 +487,31 @@ const ProductManagement = () => {
           </div>
         </div>
 
-        <div className="card shadow-sm mb-4">
-          <div className="card-header bg-white">
-            <h5 className="mb-0">Plant Care Details</h5>
+        {/* Plant Care Details */}
+        <div 
+          className="card border-0 shadow-sm mb-4"
+          style={{ borderRadius: '16px', overflow: 'hidden' }}
+        >
+          <div 
+            className="card-header"
+            style={{
+              background: 'linear-gradient(135deg, #2C5F2D 0%, #3a7d52 100%)',
+              color: '#FFFFFF',
+              padding: '1.25rem 1.5rem',
+              borderBottom: 'none'
+            }}
+          >
+            <h5 className="mb-0" style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+              <i className="bi bi-droplet-fill me-2"></i>
+              Plant Care Details
+            </h5>
           </div>
-          <div className="card-body">
+          <div className="card-body" style={{ padding: '1.5rem' }}>
             <div className="row g-3">
               <div className="col-md-3">
-                <label className="form-label">Light Requirement</label>
+                <label className="form-label fw-semibold" style={{ color: '#2C5F2D' }}>
+                  Light Requirement
+                </label>
                 <select
                   className="form-select"
                   name="light_requirement"
@@ -524,13 +591,28 @@ const ProductManagement = () => {
           </div>
         </div>
 
-        <div className="card shadow-sm mb-4">
-          <div className="card-header bg-white">
-            <h5 className="mb-0">Pricing & Inventory</h5>
+        {/* Pricing & Inventory */}
+        <div 
+          className="card border-0 shadow-sm mb-4"
+          style={{ borderRadius: '16px', overflow: 'hidden' }}
+        >
+          <div 
+            className="card-header"
+            style={{
+              background: 'linear-gradient(135deg, #2C5F2D 0%, #3a7d52 100%)',
+              color: '#FFFFFF',
+              padding: '1.25rem 1.5rem',
+              borderBottom: 'none'
+            }}
+          >
+            <h5 className="mb-0" style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+              <i className="bi bi-tag-fill me-2"></i>
+              Pricing & Inventory
+            </h5>
           </div>
-          <div className="card-body">
+          <div className="card-body" style={{ padding: '1.5rem' }}>
             <div className="row g-3">
-              <div className="col-md-3">
+              <div className="col-md-4">
                 <label className="form-label">Price *</label>
                 <input
                   type="number"
@@ -542,7 +624,7 @@ const ProductManagement = () => {
                   required
                 />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-4">
                 <label className="form-label">Compare at Price</label>
                 <input
                   type="number"
@@ -553,7 +635,7 @@ const ProductManagement = () => {
                   onChange={handleChange}
                 />
               </div>
-              <div className="col-md-2">
+              <div className="col-md-4">
                 <label className="form-label">Stock Quantity *</label>
                 <input
                   type="number"
@@ -562,49 +644,149 @@ const ProductManagement = () => {
                   value={formData.stock_quantity}
                   onChange={handleChange}
                   required
+                  min="0"
                 />
               </div>
-              <div className="col-md-2">
-                <label className="form-label">Reorder Level</label>
+              <div className="col-md-4">
+                <label className="form-label">Min Stock Threshold</label>
                 <input
                   type="number"
                   className="form-control"
-                  name="reorder_level"
-                  value={formData.reorder_level}
+                  name="min_stock_threshold"
+                  value={formData.min_stock_threshold}
                   onChange={handleChange}
+                  min="0"
                 />
               </div>
-              <div className="col-md-2">
-                <label className="form-label">Max Order Qty</label>
+              <div className="col-md-4">
+                <label className="form-label">Max Order Quantity</label>
                 <input
                   type="number"
                   className="form-control"
                   name="max_order_quantity"
                   value={formData.max_order_quantity}
                   onChange={handleChange}
+                  min="1"
+                  placeholder="Maximum quantity per order"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="d-flex gap-2">
-          <button
-            type="submit"
-            className="btn btn-success"
-            disabled={loading}
+        {/* Product Settings */}
+        <div 
+          className="card border-0 shadow-sm mb-4"
+          style={{ borderRadius: '16px', overflow: 'hidden' }}
+        >
+          <div 
+            className="card-header"
+            style={{
+              background: 'linear-gradient(135deg, #2C5F2D 0%, #3a7d52 100%)',
+              color: '#FFFFFF',
+              padding: '1.25rem 1.5rem',
+              borderBottom: 'none'
+            }}
           >
-            {loading ? 'Adding Product...' : 'Add Product'}
-          </button>
+            <h5 className="mb-0" style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+              <i className="bi bi-gear-fill me-2"></i>
+              Product Settings
+            </h5>
+          </div>
+          <div className="card-body" style={{ padding: '1.5rem' }}>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="form-check form-switch">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="is_active"
+                    name="is_active"
+                    checked={formData.is_active}
+                    onChange={handleChange}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <label className="form-check-label" htmlFor="is_active" style={{ cursor: 'pointer' }}>
+                    <strong>Active Product</strong>
+                    <small className="d-block text-muted">Product will be visible to customers</small>
+                  </label>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="d-flex gap-3 justify-content-end">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn"
             onClick={() => navigate('/admin/inventory')}
+            disabled={loading}
+            style={{
+              backgroundColor: '#FFFFFF',
+              color: '#6B7B5F',
+              border: '2px solid #E5E7EB',
+              borderRadius: '10px',
+              padding: '0.75rem 2rem',
+              fontWeight: '600',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = '#F5F1E8';
+                e.currentTarget.style.borderColor = '#2C5F2D';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+              e.currentTarget.style.borderColor = '#E5E7EB';
+            }}
           >
+            <i className="bi bi-x-circle me-2"></i>
             Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn"
+            disabled={loading}
+            style={{
+              background: loading ? '#97C97D' : 'linear-gradient(135deg, #2C5F2D 0%, #3a7d52 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.75rem 2.5rem',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(44, 95, 45, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(44, 95, 45, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(44, 95, 45, 0.3)';
+            }}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Adding Product...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check-circle-fill me-2"></i>
+                Add Product
+              </>
+            )}
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 };

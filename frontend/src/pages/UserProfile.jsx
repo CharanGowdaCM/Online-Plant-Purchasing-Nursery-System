@@ -321,7 +321,7 @@ const UserProfile = () => {
                     border: '4px solid #FFFFFF'
                   }}
                 >
-                  {user?.first_name?.[0] || 'U'}
+                  {user?.email?.[0] || 'U'}
                 </div>
                 <h5 className="mb-2" style={{ color: '#FFFFFF', fontWeight: '600' }}>
                   {user?.first_name} {user?.last_name}

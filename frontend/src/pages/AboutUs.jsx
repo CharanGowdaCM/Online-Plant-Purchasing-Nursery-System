@@ -5,10 +5,10 @@ const AboutUs = () => {
 
   const developers = [
     {
-      name: 'K Akhilesh',
+      name: 'Hemanth E',
       role: 'User and Support Management',
-      linkedin: 'https://www.linkedin.com/in/k-akhilesh-276749281/',
-      github: 'https://github.com/Akki2005'
+      linkedin: 'https://www.linkedin.com/in/hemanth-e-276749281/',
+      github: 'https://github.com/HemanthE'
     },
     {
       name: 'M Lakshya',
@@ -21,6 +21,12 @@ const AboutUs = () => {
       role: 'Product and Inventory Management',
       linkedin: 'https://www.linkedin.com/in/charan-gowda-c-m-96393428a/',
       github: 'https://github.com/CharanGowdaCM'
+    },
+    {
+      name: 'Shiva Sai A',
+      role: 'Order and Inventory Management',
+      linkedin: 'https://www.linkedin.com/in/shiva-sai-a-96393428a/',
+      github: 'https://github.com/ShivaSaiA'
     }
   ];
 
@@ -204,7 +210,7 @@ const AboutUs = () => {
 
             <div className="row g-4">
               {developers.map((dev, index) => (
-                <div key={index} className="col-md-4">
+                <div key={index} className="col-md-3">
                   <div 
                     className="card border-0 h-100"
                     style={{

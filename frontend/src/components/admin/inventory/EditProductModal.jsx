@@ -21,7 +21,7 @@ const EditProductModal = ({ product, onClose, onUpdate }) => {
     pet_friendly: false,
     stock_quantity: '',
     min_stock_threshold: '',
-    max_stock_threshold: '',
+    max_order_quantity: '',
     is_active: true,
     is_featured: false,
     category_id: '',
@@ -66,7 +66,7 @@ const EditProductModal = ({ product, onClose, onUpdate }) => {
               pet_friendly: fetchedProduct.pet_friendly || false,
               stock_quantity: fetchedProduct.stock_quantity || 0,
               min_stock_threshold: fetchedProduct.min_stock_threshold || 0,
-              max_stock_threshold: fetchedProduct.max_stock_threshold || 0,
+              max_order_quantity: fetchedProduct.max_order_quantity || 0,
               is_active: fetchedProduct.is_active !== undefined ? fetchedProduct.is_active : true,
               is_featured: fetchedProduct.is_featured || false,
               category_id: fetchedProduct.category_id || '',
@@ -114,7 +114,7 @@ const EditProductModal = ({ product, onClose, onUpdate }) => {
         pet_friendly: product.pet_friendly || false,
         stock_quantity: product.stock_quantity || 0,
         min_stock_threshold: product.min_stock_threshold || 0,
-        max_stock_threshold: product.max_stock_threshold || 0,
+        max_order_quantity: product.max_order_quantity || 0,
         is_active: product.is_active !== undefined ? product.is_active : true,
         is_featured: product.is_featured || false,
         category_id: product.category_id || '',
@@ -206,7 +206,7 @@ const EditProductModal = ({ product, onClose, onUpdate }) => {
         pet_friendly: formData.pet_friendly,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         min_stock_threshold: parseInt(formData.min_stock_threshold) || 0,
-        max_stock_threshold: parseInt(formData.max_stock_threshold) || 0,
+        max_order_quantity: parseInt(formData.max_order_quantity) || 0,
         is_active: formData.is_active,
         is_featured: formData.is_featured,
         category_id: formData.category_id || null,
@@ -701,15 +701,16 @@ const EditProductModal = ({ product, onClose, onUpdate }) => {
 
                         <div className="col-md-4">
                           <label className="form-label fw-semibold" style={{ color: '#2C5F2D' }}>
-                            Max Stock Threshold
+                            Max Order Quantity
                           </label>
                           <input
                             type="number"
                             className="form-control"
-                            name="max_stock_threshold"
-                            value={formData.max_stock_threshold}
+                            name="max_order_quantity"
+                            value={formData.max_order_quantity}
                             onChange={handleChange}
-                            min="0"
+                            min="1"
+                            placeholder="Maximum quantity per order"
                             style={{
                               borderRadius: '10px',
                               border: '2px solid #E5E7EB',
