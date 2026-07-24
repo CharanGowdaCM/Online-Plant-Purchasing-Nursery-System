@@ -8,6 +8,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { icon: 'house-door', label: 'Home', path: '/', color: '#2d5f3f' },
     { icon: 'info-circle', label: 'About Us', path: '/about', color: '#15803d' },
     { icon: 'grid-3x3-gap', label: 'All Plants', path: '/products', color: '#3a7d52' },
+    { icon: 'leaf', label: 'Plant Care Dashboard', path: '/plant-care', color: '#0f766e' },
     { icon: 'journal-text', label: 'Blogs', path: '/blogs', color: '#16a34a' },
     { icon: 'patch-question', label: 'FAQs', path: '/faqs', color: '#166534' },
   ];

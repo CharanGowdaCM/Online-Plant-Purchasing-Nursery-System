@@ -14,6 +14,7 @@ const orderRoutes = require("./orderRoutes");
 const reviewRoutes = require("./reviewRoutes");
 const aiRoutes = require("./aiRoutes");
 const faqRoutes = require("./faqRoutes");
+const plantCareRoutes = require("./plantCareRoutes");
 
 
 // Payment Processing
@@ -32,6 +33,7 @@ router.use("/orders", orderRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/ai", aiRoutes);
 router.use("/faqs", faqRoutes);
+router.use("/plant-care", plantCareRoutes);
 
 
 // Mount Payment routes

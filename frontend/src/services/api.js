@@ -34,6 +34,12 @@ const processQueue = (error, token = null) => {
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    // Avoid sending a literal JSON `null` body. With Content-Type: application/json
+    // this can cause strict JSON parsers (like Express/body-parser) to reject the request.
+    if (config && config.data === null) {
+      delete config.data;
+    }
+
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

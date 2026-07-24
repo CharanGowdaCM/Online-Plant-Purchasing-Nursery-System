@@ -29,6 +29,7 @@ A full-stack e-commerce platform for purchasing plants online, featuring compreh
 - 📦 **Order Management** - Track orders, view order history, and download invoices
 - ⭐ **Product Reviews** - Rate and review purchased products
 - 🤖 **AI Chatbot** - Get instant plant care advice using Google's Generative AI
+- 🌿 **Plant Care Dashboard** - Track plant-specific care tasks, diagnoses, weather refreshes, and smart schedules
 - 👤 **User Profile** - Manage personal information and view order history
 - 🎫 **Support Tickets** - Create and track support tickets
 - 📚 **Plant Care Guide** - Access detailed plant care information
@@ -113,7 +114,7 @@ online-plant-purchasing-nursery-system/
 │   │   │   ├── admin/       # Admin dashboard components
 │   │   │   ├── common/      # Shared components
 │   │   │   └── support/     # Support ticket components
-│   │   ├── pages/           # Page components
+│   │   ├── pages/           # Page components (landing, products, blogs, plant care, tickets, admin)
 │   │   ├── services/        # API service modules
 │   │   ├── context/         # React context (Auth)
 │   │   ├── utils/           # Utility functions
@@ -228,7 +229,7 @@ The frontend will run on `http://localhost:5173`
 #### Build Frontend
 ```bash
 cd frontend
-npm run dev
+npm run build
 ```
 
 
@@ -280,6 +281,14 @@ http://localhost:5000/api
 - `GET /api/users/profile` - Get user profile
 - `POST /api/users/profile` - Save/update profile
 - `GET /api/users/:userId` - Get user details (admin)
+
+### Plant Care Endpoints
+- `GET /api/plant-care/dashboard` - Get plant care dashboard data
+- `GET /api/plant-care/plants` - List tracked plants
+- `POST /api/plant-care/plants` - Add a tracked plant
+- `GET /api/plant-care/notifications` - Get plant care notifications
+- `POST /api/plant-care/plants/:plantId/schedule/generate` - Generate a smart care schedule
+- `POST /api/plant-care/plants/:plantId/diagnose` - Diagnose a plant issue
 
 ### Admin Endpoints
 - `GET /api/admin/users` - List all users

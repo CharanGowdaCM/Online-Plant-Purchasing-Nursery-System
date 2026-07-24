@@ -126,7 +126,6 @@ CREATE TABLE public.products (
   price numeric(10,2) NOT NULL CHECK (price >= 0),
   compare_at_price numeric(10,2) CHECK (compare_at_price >= price),
   cost_price numeric(10,2) CHECK (cost_price >= 0),
-  
   -- Plant specific attributes
   botanical_name text,
   plant_type text,
@@ -429,6 +428,104 @@ CREATE TABLE public.blog_posts (
   CONSTRAINT blog_posts_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE SET NULL
 );
 
+-- ==========================================================================
+-- SECTION 7A: PLANT CARE DASHBOARD EXTENSION
+-- ==========================================================================
+
+-- User Plants Table
+CREATE TABLE public.user_plants (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  plant_id uuid NOT NULL,
+  nickname text,
+  purchase_date date,
+  location text,
+  last_watered timestamp with time zone,
+  plant_type text,
+  watering_frequency_days integer,
+  sunlight_requirement text,
+  is_outdoor boolean,
+  environment text,
+  soil_moisture numeric(5,2),
+  health_status text NOT NULL DEFAULT 'HEALTHY' CHECK (health_status IN ('HEALTHY', 'AT_RISK', 'RECOVERING')),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_plants_pkey PRIMARY KEY (id),
+  CONSTRAINT user_plants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+  CONSTRAINT user_plants_plant_id_fkey FOREIGN KEY (plant_id) REFERENCES public.products(id) ON DELETE RESTRICT
+);
+
+-- Plant Tasks Table
+CREATE TABLE public.plant_tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_plant_id uuid NOT NULL,
+  task_type text NOT NULL CHECK (task_type IN ('WATER', 'FERTILIZE', 'REPOT', 'MONITOR')),
+  due_date timestamp with time zone NOT NULL,
+  status text NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'DONE', 'MISSED')),
+  priority text NOT NULL DEFAULT 'MEDIUM' CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH')),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  completed_at timestamp with time zone,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT plant_tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT plant_tasks_user_plant_id_fkey FOREIGN KEY (user_plant_id) REFERENCES public.user_plants(id) ON DELETE CASCADE
+);
+
+-- Care Logs Table for timeline/history/analytics
+CREATE TABLE IF NOT EXISTS public.care_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  user_plant_id uuid NOT NULL,
+  task_id uuid,
+  task_type text NOT NULL,
+  status text NOT NULL CHECK (status IN ('DONE', 'MISSED', 'SKIPPED', 'GENERATED', 'NOTIFIED')),
+  timestamp timestamp with time zone NOT NULL DEFAULT now(),
+  notes text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT care_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT care_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+  CONSTRAINT care_logs_user_plant_id_fkey FOREIGN KEY (user_plant_id) REFERENCES public.user_plants(id) ON DELETE CASCADE,
+  CONSTRAINT care_logs_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.plant_tasks(id) ON DELETE SET NULL
+);
+
+-- Safe migration for existing databases
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS plant_type text;
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS watering_frequency_days integer;
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS sunlight_requirement text;
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS is_outdoor boolean;
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS environment text;
+ALTER TABLE IF EXISTS public.user_plants ADD COLUMN IF NOT EXISTS soil_moisture numeric(5,2);
+
+-- Plant Diagnosis Table
+CREATE TABLE public.plant_diagnosis (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_plant_id uuid NOT NULL,
+  image_url text,
+  disease text NOT NULL,
+  confidence integer NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
+  severity text NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
+  raw_response jsonb NOT NULL,
+  status text NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'RESOLVED')),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  resolved_at timestamp with time zone,
+  CONSTRAINT plant_diagnosis_pkey PRIMARY KEY (id),
+  CONSTRAINT plant_diagnosis_user_plant_id_fkey FOREIGN KEY (user_plant_id) REFERENCES public.user_plants(id) ON DELETE CASCADE
+);
+
+-- Weather Cache Table
+CREATE TABLE public.weather_cache (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  location text,
+  temperature numeric(5,2) NOT NULL,
+  humidity numeric(5,2) NOT NULL,
+  condition text NOT NULL,
+  fetched_at timestamp with time zone NOT NULL DEFAULT now(),
+  raw_response jsonb,
+  CONSTRAINT weather_cache_pkey PRIMARY KEY (id),
+  CONSTRAINT weather_cache_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
 -- ============================================================================
 -- SECTION 8: NOTIFICATIONS
 -- ============================================================================
@@ -546,6 +643,24 @@ CREATE INDEX idx_plant_care_guides_is_published ON public.plant_care_guides(is_p
 CREATE INDEX idx_blog_posts_slug ON public.blog_posts(slug);
 CREATE INDEX idx_blog_posts_is_published ON public.blog_posts(is_published);
 
+-- Plant Care Dashboard Indexes
+CREATE INDEX idx_user_plants_user_id ON public.user_plants(user_id);
+CREATE INDEX idx_user_plants_plant_id ON public.user_plants(plant_id);
+CREATE INDEX idx_user_plants_health_status ON public.user_plants(health_status);
+CREATE INDEX idx_plant_tasks_user_plant_id ON public.plant_tasks(user_plant_id);
+CREATE INDEX idx_plant_tasks_due_date ON public.plant_tasks(due_date);
+CREATE INDEX idx_plant_tasks_status ON public.plant_tasks(status);
+CREATE INDEX idx_plant_tasks_priority ON public.plant_tasks(priority);
+CREATE INDEX idx_plant_diagnosis_user_plant_id ON public.plant_diagnosis(user_plant_id);
+CREATE INDEX idx_plant_diagnosis_status ON public.plant_diagnosis(status);
+CREATE INDEX idx_plant_diagnosis_created_at ON public.plant_diagnosis(created_at);
+CREATE INDEX idx_weather_cache_user_id ON public.weather_cache(user_id);
+CREATE INDEX idx_weather_cache_fetched_at ON public.weather_cache(fetched_at);
+CREATE INDEX idx_care_logs_user_id ON public.care_logs(user_id);
+CREATE INDEX idx_care_logs_user_plant_id ON public.care_logs(user_plant_id);
+CREATE INDEX idx_care_logs_task_type ON public.care_logs(task_type);
+CREATE INDEX idx_care_logs_timestamp ON public.care_logs(timestamp DESC);
+
 -- Notifications Indexes
 CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON public.notifications(is_read);
@@ -579,6 +694,12 @@ CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON public.categories
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON public.products
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_plants_updated_at BEFORE UPDATE ON public.user_plants
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_plant_tasks_updated_at BEFORE UPDATE ON public.plant_tasks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_carts_updated_at BEFORE UPDATE ON public.carts
@@ -646,6 +767,11 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.carts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_plants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.plant_tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.plant_diagnosis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.weather_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.care_logs ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Users can only view/edit their own profile
 CREATE POLICY profiles_user_policy ON public.profiles
@@ -664,6 +790,38 @@ CREATE POLICY orders_user_policy ON public.orders
 
 -- Notifications: Users can only view their own notifications
 CREATE POLICY notifications_user_policy ON public.notifications
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+CREATE POLICY user_plants_user_policy ON public.user_plants
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+CREATE POLICY plant_tasks_user_policy ON public.plant_tasks
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.user_plants
+      WHERE public.user_plants.id = user_plant_id
+      AND public.user_plants.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY plant_diagnosis_user_policy ON public.plant_diagnosis
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.user_plants
+      WHERE public.user_plants.id = user_plant_id
+      AND public.user_plants.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY weather_cache_user_policy ON public.weather_cache
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+CREATE POLICY care_logs_user_policy ON public.care_logs
   FOR ALL
   USING (auth.uid() = user_id);
 

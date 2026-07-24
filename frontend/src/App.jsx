@@ -29,6 +29,7 @@ import TicketDetails from './pages/TicketDetailsPage';
 import ActivityLogs from './pages/admin/ActivityLogs';
 import BlogsPage from './pages/BlogsPage';
 import AboutUs from './pages/AboutUs';
+import PlantCareDashboard from './pages/PlantCareDashboard';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -60,6 +61,7 @@ function AppContent() {
           <Route path="/products" element={<Products />} />
           <Route path="/blogs" element={<BlogsPage />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/plant-care" element={<PrivateRoute><PlantCareDashboard /></PrivateRoute>} />
           <Route path="/faqs" element={<FAQPage />} />
           <Route path="/create-profile" element={<CreateProfile />} />
           <Route path="/reset-password" element={<ResetPassword />} />

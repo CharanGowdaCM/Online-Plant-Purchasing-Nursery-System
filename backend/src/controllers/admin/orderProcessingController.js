@@ -7,6 +7,7 @@
 const OrderModel = require('../../models/orderModel');
 const { validateOrderUpdate,  isValidStatusTransition } = require('../../utils/validators/orderValidator');
 const { sendOrderStatusUpdate } = require('../../utils/notifications');
+const { syncDeliveredOrderToUserPlants } = require('../../utils/orderPlantSyncService');
 
 class OrderProcessingController {
   static async updateOrderStatus(req, res) {
@@ -51,12 +52,27 @@ class OrderProcessingController {
         }
       );
 
+      let deliverySyncSummary = null;
+      if (status === 'delivered' && existingOrder.status !== 'delivered') {
+        try {
+          deliverySyncSummary = await syncDeliveredOrderToUserPlants(order);
+        } catch (syncError) {
+          console.error('Failed to sync delivered order to user_plants:', syncError);
+          deliverySyncSummary = {
+            error: 'Order marked delivered but failed to auto-create user plants'
+          };
+        }
+      }
+
       await sendOrderStatusUpdate(order);
 
       res.json({
         success: true,
         message: 'Order status updated successfully',
-        data: order
+        data: {
+          order,
+          deliverySync: deliverySyncSummary
+        }
       });
     } catch (error) {
       console.error('Error in updateOrderStatus:', error);
